@@ -316,7 +316,7 @@ docker run --rm -v xhs_docker_pkg_mongo_data:/data -v $(pwd):/backup alpine tar 
 | 按季 | 联系服务商 | 3 个月，比月付更优惠 |
 | 次数包 | 联系服务商 | 预付费次数，用完即止 |
 
-- **联系渠道**：📧 vimpsam@gmail.com / 💬 Telegram：commvim / 微信：
+- **联系渠道**：📧 m0s6f4@gmail.com / 💬 微信 ：
 - 每个 Key 独立计费、独立任务流（多客户互不干扰）
 - Key 过期/欠费时，客户端会明确提示"套餐已过期，请联系管理员续费"，接收方数据不会丢失
 
