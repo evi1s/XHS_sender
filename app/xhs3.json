@@ -9,7 +9,7 @@
 	"userInfo": {
 		"avatar": "https://cardimg.agilib.cn/public/20260207/47275a830b3e4242897d53557898f38a.png",
 		"userId": "user_3558",
-		"userLink": "https://xhslink.com/m/3EZvgPjroVW",
+		"userLink": "https://xhslink.com/m/3EZvjroVW",
 		"userName": "薯队长推荐🔥"
 	},
 	"contentId": 3558,
@@ -22,7 +22,7 @@
 	"templateName": "im_goods_card_kitt",
 	"expectedPrice": 0,
 	"goodsBaseInfo": {
-		"link": "https://xhslink.com/m/3EZvgPjroVW",
+		"link": "https://xhslink.com/m/3EZvjroVW",
 		"image": {
 			"url": "https://ps.ssl.qhimg.com/t020c8867a13ba05c52.jpg",
 			"width": 800,
@@ -58,7 +58,7 @@
 	"defaultDeeplink": [{
 		"bizParam": {
 			"eventId": "short_link",
-			"shortLink": "https://xhslink.com/m/3EZvgPjroVW"
+			"shortLink": "https://xhslink.com/m/3EZvjroVW"
 		},
 		"event": "request",
 		"priority": 1
