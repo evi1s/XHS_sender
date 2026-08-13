@@ -1,5 +1,5 @@
 # 📮 XHS Sender — 小红书私信自动化发送系统
-![GitHub图像](https://github.com/evi1s/XHS_sender/blob/main/images.png)
+![GitHub图像](https://github.com/evi1s/XHS_sender/blob/main/xiaohongshu-e1677589496301.jpg)
 
 > Docker 一键部署 · NiceGUI 可视化面板 · MCP 协议接入（Chatbox / Claude 等 AI 客户端）
 
