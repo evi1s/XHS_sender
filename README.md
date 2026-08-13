@@ -157,6 +157,7 @@ docker compose ps
 
 ### 登录
 访问 `http://<IP>:8080`，使用 `.env` 中 `ADMIN_USERNAME` / `ADMIN_PASSWORD` 登录。
+![GitHub图像](https://github.com/evi1s/XHS_sender/blob/main/%E7%95%8C%E9%9D%A2.jpg)
 
 ### 主页（仪表盘）
 实时显示：**设备数量 / 今日使用量 / 接收方数量 / 系统内存 / 网络状态 / 服务端连接状态**（服务端状态带 Key 有效性检测，绿色=正常）。
