@@ -1,0 +1,68 @@
+{
+	"id": 3558,
+	"type": "dslGoodsCard",
+	"width": 800,
+	"height": 800,
+	"itemId": "item_3558",
+	"selfHigh": false,
+	"sellerId": "item_3558",
+	"userInfo": {
+		"avatar": "https://cardimg.agilib.cn/public/20260207/47275a830b3e4242897d53557898f38a.png",
+		"userId": "user_3558",
+		"userLink": "https://xhslink.com/m/3EZvgPjroVW",
+		"userName": "薯队长推荐🔥"
+	},
+	"contentId": 3558,
+	"minVersion": 0,
+	"defaultImage": "https://ps.ssl.qhimg.com/t020c8867a13ba05c52.jpg",
+	"defaultTitle": "快速精准引流，高效客户转化",
+	"purchaseInfo": {
+		"status": 0
+	},
+	"templateName": "im_goods_card_kitt",
+	"expectedPrice": 0,
+	"goodsBaseInfo": {
+		"link": "https://xhslink.com/m/3EZvgPjroVW",
+		"image": {
+			"url": "https://ps.ssl.qhimg.com/t020c8867a13ba05c52.jpg",
+			"width": 800,
+			"height": 800
+		},
+		"skuId": "sku_3558",
+		"title": "快速精准引流，高效客户转化",
+		"hostId": 3558,
+		"itemId": 3558,
+		"buyable": true,
+		"sellerId": "seller_3558",
+		"displayLines": 2
+	},
+	"searchContent": "快速精准引流，高效客户转化",
+	"showMenuIdList": [
+		2,
+		3,
+		5,
+		6,
+		7,
+		16
+	],
+	"sourceDeeplink": "xhsdiscover://item_detail/3558?source=CHAT_SHOP_GOODS_CARD",
+	"tagStrategyMap": {
+		"after_price": [{
+			"type": "sold",
+			"tag_type": 1,
+			"tag_content": {
+				"content": "点击加微信详聊"
+			}
+		}]
+	},
+	"defaultDeeplink": [{
+		"bizParam": {
+			"eventId": "short_link",
+			"shortLink": "https://xhslink.com/m/3EZvgPjroVW"
+		},
+		"event": "request",
+		"priority": 1
+	}],
+	"defaultSubTitle": "快速精准引流，高效客户转化",
+	"searchPrefixContent": "快速精准引流，高效客户转化"
+}

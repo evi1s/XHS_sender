@@ -1,0 +1,14 @@
+# 必备模块（与线上环境版本兼容）
+httpx>=0.27
+nicegui>=3.11.1,<4
+requests>=2.31
+pymongo>=4.6
+loguru>=0.7
+motor>=3.3
+pytz
+psutil>=5.9
+
+# MCP Server（让 Chatbox 等客户端通过 MCP 协议调用）
+fastmcp>=2.8
+# 短链签名库（xhshow：本地生成小红书短链签名）
+xhshow>=0.2

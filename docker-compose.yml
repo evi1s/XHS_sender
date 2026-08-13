@@ -1,0 +1,51 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: xhs_mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-root}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok", "-u", "${MONGO_ROOT_USERNAME:-root}", "-p", "${MONGO_ROOT_PASSWORD}", "--authenticationDatabase", "admin"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    networks:
+      - xhs_net
+
+  app:
+    build: .
+    container_name: xhs_app
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      MONGO_HOST: mongo
+      MONGO_PORT: "27017"
+      MONGO_USERNAME: ${MONGO_ROOT_USERNAME:-root}
+      MONGO_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      MONGO_AUTH_SOURCE: admin
+      MONGO_DB_NAME: ${MONGO_DB_NAME:-xhs_demo}
+      PROXY_SERVER_URL: ${PROXY_SERVER_URL}
+      PROXY_API_KEY: ${PROXY_API_KEY}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123456}
+      CHECK_USER_ID: ${CHECK_USER_ID}
+      STORAGE_SECRET: ${STORAGE_SECRET:-xhs_storage_secret_change_me}
+    ports:
+      - "${WEB_PORT:-8080}:8080"
+      - "${MCP_PORT:-8090}:8090"
+    networks:
+      - xhs_net
+
+volumes:
+  mongo_data:
+
+networks:
+  xhs_net:
+    driver: bridge
