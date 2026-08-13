@@ -99,7 +99,7 @@ xhs_docker_pkg/
 ### 第一步：获取代码
 
 ```bash
-git clone <你的仓库地址> xhs_sender
+git clone https://github.com/evi1s/XHS_sender.git
 cd xhs_sender
 ```
 
@@ -128,7 +128,7 @@ docker compose ps
 | NiceGUI 面板 | `http://<服务器IP>:8080` | 默认账号 `admin` / `admin123456`（可在 .env 修改） |
 | MCP Server | `http://<服务器IP>:8090/mcp` | 供 Chatbox / Claude 等客户端接入 |
 
-> 若宿主机 8080 被占用，修改 `.env` 中 `WEB_PORT` / `MCP_PORT` 后 `docker compose up -d` 重启。
+> 如果8080端口被占用，修改 `.env` 中 `WEB_PORT` / `MCP_PORT` 后 `docker compose up -d` 重启。
 
 ---
 
@@ -280,7 +280,7 @@ docker run --rm -v xhs_docker_pkg_mongo_data:/data -v $(pwd):/backup alpine tar 
 
 ## 💳 购买服务端 API Key
 
-客户端已开源，但**发送通道由服务端提供**，需购买 API Key：
+客户端已开源，**发送通道由服务端提供**，需购买API Key：
 
 | 套餐 | 价格 | 说明 |
 |---|---|---|
@@ -288,7 +288,7 @@ docker run --rm -v xhs_docker_pkg_mongo_data:/data -v $(pwd):/backup alpine tar 
 | 按季 | 联系服务商 | 3 个月，比月付更优惠 |
 | 次数包 | 联系服务商 | 预付费次数，用完即止 |
 
-- **联系渠道**：📧 邮箱 / 💬 Telegram / 微信（*在此填写你的联系方式*）
+- **联系渠道**：📧 vimpsam@gmail.com / 💬 Telegram：commvim / 微信：
 - 每个 Key 独立计费、独立任务流（多客户互不干扰）
 - Key 过期/欠费时，客户端会明确提示"套餐已过期，请联系管理员续费"，接收方数据不会丢失
 
