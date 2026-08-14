@@ -4,8 +4,10 @@ import uuid
 from datetime import datetime
 import pytz
 
-
 def generate_xhs_fingerprint(did: str) -> str:
+    """
+    设备环境校验的fingerprint参数
+    """
     if not did:
         return ""
     shanghai_tz = pytz.timezone('Asia/Shanghai')
@@ -18,6 +20,9 @@ def generate_xhs_fingerprint(did: str) -> str:
 
 
 def generate_xhs_fid() -> str:
+    """
+    生成小红书的 x_legacy_fid 参数
+    """
     timestamp = int(time.time())
     md5_uuid = hashlib.md5(str(uuid.uuid4()).encode()).hexdigest()
     return f"{timestamp}-0-0-{md5_uuid}"

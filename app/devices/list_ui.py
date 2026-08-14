@@ -1,5 +1,7 @@
 import asyncio
+
 from nicegui import ui
+
 from . import db_logic
 
 
@@ -13,6 +15,7 @@ def create_device_list_ui():
         if value in (None, ''):
             return '-'
         s = str(value)
+
         if len(s) >= 10 and s[4] == '-' and s[7] == '-':
             return s[2:]
         return s
@@ -24,6 +27,7 @@ def create_device_list_ui():
         start = (state['page'] - 1) * state['page_size']
         end = start + state['page_size']
         page_items = state['items'][start:end]
+
         table_container.clear()
         with table_container:
             for item in page_items:
@@ -37,6 +41,7 @@ def create_device_list_ui():
                     ui.label(format_value(item.get('consecutive_fail_days'))).classes('w-[7%]')
                     ui.label(format_value(item.get('remarks'))).classes('w-[10%] truncate')
                     ui.label(format_time(item.get('added_time'))).classes('w-[17%] truncate')
+
         page_info.text = f'第 {state["page"]} / {total_pages} 页，共 {total} 条'
         paginator.max = total_pages
         paginator.set_value(state['page'])
@@ -53,6 +58,7 @@ def create_device_list_ui():
             ui.label('设备列表').classes('text-xl font-bold text-white')
             ui.space()
             ui.button('刷新', icon='refresh', on_click=load_items, color='white').props('flat text-color=primary')
+
         with ui.column().classes('w-full gap-4 px-4 py-4'):
             with ui.row().classes('w-full items-center no-wrap gap-2 px-2 py-2 font-semibold bg-gradient-to-r from-gray-100 to-gray-50 dark:from-gray-800 dark:to-gray-700 rounded-lg text-sm'):
                 ui.label('Nickname').classes('w-[16%]')
@@ -62,12 +68,14 @@ def create_device_list_ui():
                 ui.label('连续失败天数').classes('w-[7%]')
                 ui.label('备注').classes('w-[10%]')
                 ui.label('添加时间').classes('w-[17%]')
+
             table_container = ui.column().classes('w-full gap-0')
             page_info = ui.label('').classes('text-sm text-gray-500')
             paginator = ui.pagination(1, 1).props('boundary-numbers')
 
             def on_page_change(e):
                 state['page'] = int(e.args) if e.args is not None else 1
+
                 render_table()
 
             paginator.on('update:model-value', on_page_change)

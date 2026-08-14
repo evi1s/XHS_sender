@@ -5,8 +5,10 @@ from devices.readdate import convert_xhs_register_time
 
 
 def get_all_devices_summary() -> list:
+    """获取所有设备的摘要列表。"""
     devices_collection = get_devices_collection()
     devices = devices_collection.find({}, {'nickname': 1, 'userid': 1})
+
     summary_list = [
         {
             'value': str(d['_id']),
@@ -18,6 +20,7 @@ def get_all_devices_summary() -> list:
 
 
 def get_all_devices_list() -> list:
+    """获取所有设备的列表数据，用于分页展示。"""
     devices_collection = get_devices_collection()
     devices = devices_collection.find(
         {},
@@ -29,6 +32,7 @@ def get_all_devices_list() -> list:
             'remarks': 1,
         },
     ).sort('nickname', 1)
+
     result = []
     for d in devices:
         userid = d.get('userid', 'N/A')
@@ -37,6 +41,7 @@ def get_all_devices_list() -> list:
             register_time = convert_xhs_register_time(userid).get('local_time', '')
         except Exception:
             register_time = ''
+
         added_time = ''
         try:
             oid = d.get('_id')
@@ -45,6 +50,7 @@ def get_all_devices_list() -> list:
                 added_time = objectid_to_datetime(str(oid)).astimezone().replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S')
         except Exception:
             added_time = ''
+
         result.append({
             '_id': str(d.get('_id', '')),
             'nickname': d.get('nickname', 'N/A'),
@@ -59,6 +65,7 @@ def get_all_devices_list() -> list:
 
 
 def get_device_by_id(device_id: str) -> Optional[Dict]:
+    """根据ID获取单个设备的详细信息。"""
     try:
         devices_collection = get_devices_collection()
         device = devices_collection.find_one({'_id': ObjectId(device_id)})
@@ -71,8 +78,10 @@ def get_device_by_id(device_id: str) -> Optional[Dict]:
 
 
 def add_or_update_device(data: Dict) -> Dict:
+    """添加或更新设备信息。"""
     devices_collection = get_devices_collection()
     device_id_str = data.pop('_id', None)
+
     try:
         if device_id_str:
             device_id = ObjectId(device_id_str)
@@ -87,6 +96,7 @@ def add_or_update_device(data: Dict) -> Dict:
 
 
 def delete_device(device_id: str) -> Dict:
+    """根据ID删除设备。"""
     try:
         devices_collection = get_devices_collection()
         result = devices_collection.delete_one({'_id': ObjectId(device_id)})
