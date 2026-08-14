@@ -1,80 +1,123 @@
-import importlib
-from nicegui import ui
+import re
 import config
+import importlib
+import os
+from nicegui import ui
+
+CONFIG_FILE = 'config.py'
 
 
 def mask_key(key: str) -> str:
+    """脱敏：保留前4后4，中间星号数量=被隐藏的字符数，可看出完整长度；短key全星号"""
     if not key:
         return ''
     if len(key) <= 8:
         return '*' * len(key)
-    return key[:4] + '*' * (len(key) - 8) + key[-4:]
+    return f'{key[:4]}{"*" * (len(key) - 8)}{key[-4:]}'
 
 
 def create_ui():
+    """服务器连接与 API Key 设置"""
+
+    full_key = {'value': ''}
+
+    def load_config():
+        config = {}
+        if not os.path.exists(CONFIG_FILE):
+            return
+
+        try:
+            with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+                for line in f:
+                    match = re.match(r'^\s*([A-Z_]+)\s*=\s*"(.*?)"\s*$', line)
+                    if match:
+                        key, value = match.groups()
+                        config[key] = value
+
+            if 'PROXY_SERVER_URL' in config:
+                proxy_url_input.set_value(config['PROXY_SERVER_URL'])
+            if 'PROXY_API_KEY' in config:
+                full_key['value'] = config['PROXY_API_KEY']
+                proxy_key_input.set_value(mask_key(config['PROXY_API_KEY']))
+
+        except Exception as e:
+            ui.notify(f'加载配置文件失败: {e}', color='negative')
+
+    def toggle_key_visibility():
+        """眼睛按钮：切换 脱敏值 <-> 完整值 显示"""
+        if proxy_key_input.value == full_key['value'] and full_key['value']:
+
+            proxy_key_input.set_value(mask_key(full_key['value']))
+        else:
+
+            proxy_key_input.set_value(full_key['value'])
+
+    async def save_config():
+        url = proxy_url_input.value
+        api_key_input_val = proxy_key_input.value
+
+
+
+
+        if api_key_input_val in (mask_key(full_key['value']), full_key['value']) and full_key['value']:
+            api_key = full_key['value']
+        else:
+            api_key = api_key_input_val
+
+        lines = []
+        url_found = False
+        key_found = False
+
+        if os.path.exists(CONFIG_FILE):
+            with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+
+        for i, line in enumerate(lines):
+            if re.match(r'^\s*PROXY_SERVER_URL\s*=', line):
+                lines[i] = f'PROXY_SERVER_URL = "{url}"\n'
+                url_found = True
+            elif re.match(r'^\s*PROXY_API_KEY\s*=', line):
+                lines[i] = f'PROXY_API_KEY = "{api_key}"\n'
+                key_found = True
+
+        if not url_found:
+            lines.append(f'PROXY_SERVER_URL = "{url}"\n')
+        if not key_found:
+            lines.append(f'PROXY_API_KEY = "{api_key}"\n')
+
+        try:
+            with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+                f.writelines(lines)
+
+
+            full_key['value'] = api_key
+            proxy_key_input.set_value(mask_key(api_key))
+            importlib.reload(config)
+            ui.notify('配置已保存', color='positive')
+        except Exception as e:
+            ui.notify(f'保存配置失败: {e}', color='negative')
+
     with ui.card().classes('w-full max-w-5xl mx-auto rounded-2xl shadow-lg'):
-        with ui.row().classes('w-full items-center bg-gradient-to-r from-violet-600 to-purple-700 rounded-t-2xl px-4 py-3'):
+        with ui.row().classes('w-full items-center bg-gradient-to-r from-violet-600 to-purple-600 rounded-t-2xl px-4 py-3'):
             ui.icon('vpn_key', size='28px').classes('text-white')
             ui.label('授权设置').classes('text-xl font-bold text-white')
-            ui.space()
+
         with ui.column().classes('w-full gap-4 px-4 py-4'):
-            ui.label('服务端 API Key 设置').classes('text-lg font-bold')
-            ui.label('此处配置用于调用远程服务端的 API Key，购买后由服务商提供。').classes('text-sm text-gray-500')
+            ui.label('配置服务端地址与 API Key，此设置将保存到应用配置文件中。').classes('text-sm text-gray-500')
 
-            state = {'full_key': getattr(config, 'PROXY_API_KEY', '') or ''}
-            key_input = ui.input('API Key', value=mask_key(state['full_key'])).props('outlined').classes('w-full')
-            with key_input.add_slot('append'):
-                def toggle_visibility():
-                    if key_input.value == mask_key(state['full_key']):
-                        key_input.value = state['full_key']
-                        ui.notify('显示完整 Key，请勿泄露！', color='warning')
-                    else:
-                        key_input.value = mask_key(state['full_key'])
-                ui.button(icon='visibility', on_click=toggle_visibility, color='none').props('flat round dense')
+            proxy_url_input = ui.input(
+                label='Server_URL',
+                placeholder='例如: http://127.0.0.1:8000/execute-task'
+            ).props('outlined').classes('w-full')
 
-            async def save_config():
-                import os
-                val = key_input.value.strip()
-                if not val:
-                    ui.notify('请输入 API Key！', color='warning')
-                    return
-                if val != state['full_key'] and '*' in val:
-                    ui.notify('Key 不完整（含星号），未修改。', color='warning')
-                    return
-                cfg_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.py')
-                with open(cfg_path, 'r', encoding='utf-8') as f:
-                    lines = f.readlines()
-                found = False
-                for i, line in enumerate(lines):
-                    if line.strip().startswith('PROXY_API_KEY'):
-                        lines[i] = f'PROXY_API_KEY = os.getenv("PROXY_API_KEY", "{val}")\n'
-                        found = True
-                        break
-                if not found:
-                    lines.append(f'PROXY_API_KEY = os.getenv("PROXY_API_KEY", "{val}")\n')
-                with open(cfg_path, 'w', encoding='utf-8') as f:
-                    f.writelines(lines)
-                importlib.reload(config)
-                state['full_key'] = val
-                key_input.value = mask_key(val)
-                ui.notify('API Key 已保存并生效！', color='positive')
+            with ui.input(
+                label='API_Key',
+                placeholder='例如: YOUR-SECRET-API-KEY-FOR-CLIENTS-12345'
+            ).props('outlined').classes('w-full') as proxy_key_input:
+                with proxy_key_input.add_slot('append'):
+                    ui.button(icon='visibility', on_click=toggle_key_visibility, color='transparent').props(
+                        'flat round dense').classes('text-gray-500')
 
-            async def test_connection():
-                import httpx
-                import os
-                api_key = state['full_key']
-                base = config.PROXY_SERVER_URL.split('/execute-task')[0]
-                try:
-                    async with httpx.AsyncClient(timeout=8) as c:
-                        r = await c.get(base + '/customer/status', headers={'X-API-Key': api_key})
-                        info = r.json()
-                    if info.get('valid'):
-                        ui.notify(f"Key 有效！{info.get('plan_type', '')} 剩余 {info.get('remaining', '∞')} 次，到期 {info.get('expire_at', '不限')}", color='positive')
-                    else:
-                        ui.notify(f"Key 无效: {info.get('reason', '未知')}", color='negative')
-                except Exception as e:
-                    ui.notify(f"连接失败: {e}", color='negative')
+            ui.button('保存配置', on_click=save_config, icon='save', color='primary').classes('w-full mt-2')
 
-            with ui.row().classes('w-full gap-2'):
-                ui.button('保存 Key', on_click=save_config, icon='save', color='primary')
-                ui.button('测试连接', on_click=test_connection, icon='wifi_tethering', color='secondary')
+    ui.timer(0.1, load_config, once=True)
