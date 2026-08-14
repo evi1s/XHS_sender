@@ -1,10 +1,19 @@
 import os
 
 
+"""
+
+配置文件
+--------------------------
+这里定义了整个应用所需的所有配置，包括数据库连接信息和各个模块配置。
+当需要修改配置时，只应修改此文件。
+"""
+
+
 PROXY_SERVER_URL = os.getenv("PROXY_SERVER_URL", "")
 PROXY_API_KEY = os.getenv("PROXY_API_KEY", "")
 
-ADMIN_USERNAME = os.getenv('ADMIN_USERNAME', 'admin')
+ADMIN_USERNAME = 'admin'
 ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'admin')
 
 

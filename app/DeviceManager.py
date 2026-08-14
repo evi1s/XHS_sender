@@ -1,87 +1,74 @@
-import sys
-import datetime
-from pymongo import MongoClient, ReturnDocument
-import config
+
+from pymongo import MongoClient
 from loguru import logger
 
-
 class DeviceManager:
-    def __init__(self):
-        try:
-            self.client = MongoClient(f'mongodb://{config.MONGO_HOST}:{config.MONGO_PORT}/', username=config.MONGO_USERNAME, password=config.MONGO_PASSWORD, authSource=config.MONGO_AUTH_SOURCE, serverSelectionTimeoutMS=5000)
-            self.db = self.client[config.MONGO_DB_NAME]
-            self.collection = self.db[config.MONGO_DEVICE_COLLECTION]
-            self.client.server_info()
-            logger.info(f"DeviceManager: 成功连接到MongoDB，目标工作集合: '{config.MONGO_DEVICE_COLLECTION}'。")
-        except Exception as e:
-            logger.critical(f"DeviceManager: 无法连接到MongoDB。错误: {e}")
-            sys.exit(1)
+    """
+    负责从 MongoDB 管理和获取设备配置信息。
+    """
+    def __init__(self, mongo_host, mongo_port, mongo_username, mongo_password, mongo_db_name, device_collection_name='devices'):
+        self.mongo_host = mongo_host
+        self.mongo_port = mongo_port
+        self.mongo_username = mongo_username
+        self.mongo_password = mongo_password
+        self.mongo_db_name = mongo_db_name
+        self.device_collection_name = device_collection_name
+        self._client = None
+        self._db = None
+        self._collection = None
+
+    def _connect(self):
+        """
+        建立或验证与 MongoDB 的连接。
+        """
+        if self._client is None:
+            try:
+                self._client = MongoClient(
+                    f'mongodb://{self.mongo_host}:{self.mongo_port}/',
+                    username=self.mongo_username,
+                    password=self.mongo_password,
+                    authSource='admin'
+                )
+                self._client.admin.command('ping')
+                self._db = self._client[self.mongo_db_name]
+                self._collection = self._db[self.device_collection_name]
+                logger.info("DeviceManager: 成功连接到MongoDB。")
+            except Exception as e:
+                logger.error(f"DeviceManager: 连接到MongoDB失败: {e}")
+                self._client = None
+                raise
+        elif not self._client.admin.command('ping'):
+            logger.warning("DeviceManager: MongoDB 连接已断开，尝试重新连接...")
+            self._client = None
+            self._connect()
 
     def get_device_by_userid(self, userid):
-        doc = self.collection.find_one({'userid': userid})
-        if doc and '_id' in doc:
-            doc.pop('_id')
-        return doc
+        """
+        根据 userid 从 MongoDB 获取设备配置。
 
-    def find_available_user_and_claim(self, claim_duration_seconds):
-        now_time = datetime.datetime.now()
-        now_str = now_time.strftime('%Y-%m-%d %H:%M:%S')
-        today_str = now_time.strftime('%Y-%m-%d')
-        claim_until_time = now_time + datetime.timedelta(seconds=claim_duration_seconds)
-        claim_until_str = claim_until_time.strftime('%Y-%m-%d %H:%M:%S')
-        query = {
-            '$and': [
-                {'$or': [{'next_send_time': {'$exists': False}}, {'next_send_time': {'$lte': now_str}}]},
-                {'$or': [{'last_usage_date': {'$ne': today_str}}, {'daily_usage_count': {'$lt': config.MAX_DAILY_USAGE}}]}
-            ]
-        }
-        update = {'$set': {'next_send_time': claim_until_str}}
-        doc = self.collection.find_one_and_update(query, update, sort=[('next_send_time', 1)], return_document=ReturnDocument.AFTER)
-        if doc and '_id' in doc:
-            doc.pop('_id')
-        return doc
-
-    def increment_daily_usage(self, userid):
-        now = datetime.datetime.now()
-        today_str = now.strftime('%Y-%m-%d')
-        user_doc = self.collection.find_one({'userid': userid})
-        if user_doc:
-            if user_doc.get('last_usage_date') == today_str:
-                self.collection.update_one({'userid': userid}, {'$inc': {'daily_usage_count': 1}})
+        :param userid: 要查询的用户的 ID。
+        :return: 设备配置字典，如果没有找到则返回 None。
+        """
+        try:
+            self._connect()
+            logger.info(f"DeviceManager: 正在为用户ID '{userid}' 获取设备配置...")
+            device_config = self._collection.find_one({'userid': userid})
+            if device_config:
+                if '_id' in device_config:
+                    del device_config['_id']
+                logger.info(f"DeviceManager: 找到用户ID '{userid}' 的设备配置。")
+                return device_config
             else:
-                self.collection.update_one({'userid': userid}, {'$set': {'daily_usage_count': 1, 'last_usage_date': today_str}})
-
-    def update_next_send_time(self, userid, next_send_timestamp):
-        next_send_datetime = datetime.datetime.fromtimestamp(next_send_timestamp)
-        next_send_time_str = next_send_datetime.strftime('%Y-%m-%d %H:%M:%S')
-        self.collection.update_one({'userid': userid}, {'$set': {'next_send_time': next_send_time_str}})
-
-    def record_consecutive_failure(self, userid):
-        today_str = datetime.datetime.now().strftime('%Y-%m-%d')
-        user_doc = self.collection.find_one({'userid': userid})
-        if not user_doc:
-            return 1, False
-        last_fail_date = user_doc.get('last_fail_date', '')
-        consecutive_fail_days = user_doc.get('consecutive_fail_days', 0)
-        crossed_day = False
-        if last_fail_date == today_str:
-            consecutive_fail_days += 1
-        elif last_fail_date:
-            try:
-                if (datetime.datetime.strptime(today_str, '%Y-%m-%d') - datetime.datetime.strptime(last_fail_date, '%Y-%m-%d')).days == 1:
-                    consecutive_fail_days += 1
-                    crossed_day = True
-                else:
-                    consecutive_fail_days = 1
-            except:
-                consecutive_fail_days = 1
-        else:
-            consecutive_fail_days = 1
-        self.collection.update_one({'userid': userid}, {'$set': {'last_fail_date': today_str, 'consecutive_fail_days': consecutive_fail_days}})
-        return consecutive_fail_days, crossed_day
-
-    def clear_consecutive_failure(self, userid):
-        self.collection.update_one({'userid': userid}, {'$set': {'consecutive_fail_days': 0, 'last_fail_date': ''}})
+                logger.warning(f"DeviceManager: 未找到用户ID '{userid}' 的设备配置。")
+                return None
+        except Exception as e:
+            logger.error(f"DeviceManager: 获取用户ID '{userid}' 的设备配置时发生错误: {e}")
+            return None
 
     def close(self):
-        self.client.close()
+        """
+        关闭 MongoDB 连接。
+        """
+        if self._client:
+            self._client.close()
+            logger.info("DeviceManager: MongoDB 连接已关闭。")
