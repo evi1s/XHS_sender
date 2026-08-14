@@ -38,6 +38,7 @@ MENU_ITEMS = {
 
 
 def _stat_card(title: str, icon: str, color: str) -> dict:
+    """仪表盘统计卡片，返回 value/sub 标签引用以便定时刷新。"""
     with ui.card().classes('w-60 rounded-2xl shadow-lg bg-white dark:bg-gray-800'):
         with ui.row().classes('items-center gap-4'):
             with ui.element('div').classes(f'w-12 h-12 rounded-xl bg-gradient-to-br {color} flex items-center justify-center shrink-0'):
@@ -50,6 +51,7 @@ def _stat_card(title: str, icon: str, color: str) -> dict:
 
 
 async def _refresh_stats(cards: dict):
+    """刷新主页全部统计卡片（设备/使用量/userid/内存/网络/服务端）。"""
     try:
         proc = getattr(runapp, 'SCRIPT_PROCESS', None)
         running = proc is not None and getattr(proc, 'returncode', None) is None
@@ -64,12 +66,14 @@ async def _refresh_stats(cards: dict):
     except Exception as e:
         cards['runner']['value'].set_text('未知')
         cards['runner']['sub'].set_text(f'{type(e).__name__}')
+
     try:
         cards['devices']['value'].set_text(str(get_devices_collection().count_documents({})))
         cards['devices']['sub'].set_text('发送设备')
     except Exception as e:
         cards['devices']['value'].set_text('N/A')
         cards['devices']['sub'].set_text(f'错误: {type(e).__name__}')
+
     try:
         today = datetime.now().strftime('%Y-%m-%d')
         docs = get_devices_collection().find({'last_usage_date': today}, {'daily_usage_count': 1})
@@ -79,6 +83,7 @@ async def _refresh_stats(cards: dict):
     except Exception:
         cards['usage']['value'].set_text('N/A')
         cards['usage']['sub'].set_text('查询失败')
+
     try:
         n_userids = get_collection(MONGO_USER_ID_COLLECTION).count_documents({})
         cards['userids']['value'].set_text(str(n_userids))
@@ -86,6 +91,7 @@ async def _refresh_stats(cards: dict):
     except Exception:
         cards['userids']['value'].set_text('N/A')
         cards['userids']['sub'].set_text('查询失败')
+
     try:
         vm = psutil.virtual_memory()
         cards['memory']['value'].set_text(f'{vm.percent}%')
@@ -93,6 +99,7 @@ async def _refresh_stats(cards: dict):
     except Exception:
         cards['memory']['value'].set_text('N/A')
         cards['memory']['sub'].set_text('不可用')
+
     try:
         async with httpx.AsyncClient(timeout=5) as c:
             t0 = time.time()
@@ -106,6 +113,7 @@ async def _refresh_stats(cards: dict):
         cards['network']['value'].set_text('离线')
         cards['network']['sub'].set_text('无法访问外网')
         cards['network']['value'].classes(remove='text-red-500 text-green-500', add='text-red-500')
+
     try:
         api_key = (getattr(config, 'PROXY_API_KEY', '') or '').strip()
         headers = {'X-API-Key': api_key} if api_key else {}
@@ -125,6 +133,7 @@ async def _refresh_stats(cards: dict):
         cards['server']['value'].set_text('离线')
         cards['server']['sub'].set_text(f'{type(e).__name__}')
         cards['server']['value'].classes(remove='text-green-500 text-red-500', add='text-red-500')
+
     try:
         api_key = (getattr(config, 'PROXY_API_KEY', '') or '').strip()
         base = PROXY_SERVER_URL.split('/execute-task')[0]
@@ -156,15 +165,18 @@ async def _refresh_stats(cards: dict):
 
 
 def render_home():
+    """主页仪表盘：系统概览统计 + 公告区。"""
     with ui.column().classes('w-full max-w-5xl gap-6'):
         with ui.card().classes('w-full rounded-2xl'):
             readme_display = ui.html('<div style="text-align:right;width:100%"><div style="display:inline-block;text-align:left;background-color:#fdf7e9;border-left:5px solid #f0ad4e;padding:12px 15px;border-radius:5px"><h3 style="margin:0;color:#c08b3a">正在加载公告...</h3></div></div>')
+
         with ui.card().classes('w-full rounded-2xl bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10'):
             with ui.row().classes('items-center justify-between w-full'):
                 with ui.column().classes('gap-1'):
                     ui.label('系统概览').classes('text-xl font-bold')
                     ui.label('设备、用量、网络与服务端状态（每 30 秒自动刷新）').classes('text-sm text-gray-500 dark:text-gray-400')
                 ui.icon('dashboard_customize', size='48px').classes('text-indigo-400')
+
         with ui.row().classes('w-full gap-4 flex-wrap'):
             cards = {
                 'runner': _stat_card('执行程序', 'play_circle', 'from-slate-500 to-gray-600'),
@@ -177,6 +189,7 @@ def render_home():
                 'key': _stat_card('Key时效', 'vpn_key', 'from-teal-500 to-cyan-500'),
             }
 
+
         async def load_readme():
             try:
                 async with httpx.AsyncClient(timeout=10.0) as c:
@@ -186,88 +199,150 @@ def render_home():
             except Exception as e:
                 readme_display.set_content(f"<div style='text-align:right;width:100%'><div style='display:inline-block;text-align:left;background-color:#fdf7e9;border-left:5px solid #f0ad4e;padding:12px 15px;border-radius:5px'><h3 style='margin:0'>加载公告失败</h3><p style='margin:4px 0 0'><code>{type(e).__name__}: {e}</code></p></div></div>")
 
-        async def refresh_all():
-            await _refresh_stats(cards)
-            await load_readme()
-
-        ui.timer(30, refresh_all)
-        ui.timer(0.1, refresh_all, once=True)
+        ui.timer(0.3, lambda: _refresh_stats(cards), once=True)
+        ui.timer(30, lambda: _refresh_stats(cards))
+        ui.timer(0.5, load_readme, once=True)
 
 
-def main_page():
-    if not app.storage.user.get('authenticated', False):
+@ui.page('/')
+async def main_page():
+    ui.add_head_html('<script src="https://plugin-code.salesmartly.com/js/project_8724_730398_1778521721.js"></script>')
+
+    dark = ui.dark_mode()
+
+    if not app.storage.user.get('authenticated'):
+        ui.query('body').style(f'''
+            background-image: url("{LOGIN_BG_URL}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        ''')
+
+        with ui.column().classes('absolute-center items-center gap-4'):
+            with ui.card().classes('w-96 p-8 rounded-lg shadow-xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm'):
+                ui.label('小红书控制面板(3.0)').classes('self-center text-2xl font-semibold text-gray-800 dark:text-white')
+                username = ui.input('账号').props('outlined dense').classes('w-full')
+                password = ui.input('密码', password=True, password_toggle_button=True).props('outlined dense').classes('w-full')
+
+                async def attempt_login():
+                    is_valid = (username.value == ADMIN_USERNAME and password.value == ADMIN_PASSWORD)
+                    if is_valid:
+                        app.storage.user.update({'authenticated': True, 'username': username.value, 'view': 'home'})
+                        ui.navigate.to('/')
+                    else:
+                        ui.notify('账号或密码错误', color='negative', icon='warning')
+
+                ui.button('登录', on_click=attempt_login).classes('w-full mt-4 py-3')
+                ui.button('联系客服↘', on_click=lambda: ui.navigate.to(CONTACT_US_URL, new_tab=True), icon='support_agent') \
+                    .props('flat text-color="grey-8"') \
+                    .classes('w-full mt-2')
+
         return
+
     app.storage.user['view'] = 'home'
-    with ui.header().classes('bg-gradient-to-r from-indigo-600 to-purple-600 items-center').props('elevated'):
-        ui.button(icon='menu', on_click=lambda: drawer.toggle(), color='white').props('flat round')
-        ui.label('小红书控制面板').classes('text-xl font-bold text-white')
-        ui.space()
-        with ui.row().classes('items-center gap-2'):
+
+    with ui.header(elevated=True).classes('justify-between items-center px-8 py-2 text-white bg-gradient-to-r from-indigo-600 to-purple-600'):
+        with ui.row().classes('items-center gap-4'):
             ui.image('/img/header_logo.png').style('height: 40px; width: 40px;')
-            ui.label('欢迎，' + str(app.storage.user.get('username', ''))).classes('text-white')
-        ui.button(icon='logout', on_click=logout, color='white').props('flat round').tooltip('退出登录')
-    with ui.left_drawer(value=False).classes('bg-gray-50 dark:bg-gray-900').props('bordered') as drawer:
-        with ui.column().classes('w-full gap-1 p-2'):
-            for view_name, item in MENU_ITEMS.items():
-                btn = ui.button(item['name'], on_click=lambda v=view_name: change_view(v)).props('flat').classes('w-full justify-start')
-                btn.props(f'icon={item["icon"]}')
-    with ui.column().classes('w-full p-6'):
-        content_container = ui.column().classes('w-full')
+            ui.label('小红书私信控制面板(Beta_3.3)').classes('text-2xl font-bold')
+        with ui.row().classes('items-center gap-4'):
+            ui.label(f'欢迎, {app.storage.user.get("username")}!').classes('text-lg')
+            def logout():
+                app.storage.user.clear()
+                ui.navigate.to('/')
+            ui.button(icon='logout', on_click=logout).props('flat round text-color="white"').tooltip('退出登录')
+
+    menu_items_ui = {}
+    content_container = ui.column().classes('w-full p-4 md:p-8')
 
     def change_view(view_name: str):
         app.storage.user['view'] = view_name
+
+        active_class = 'bg-gray-200 dark:bg-gray-700'
+        for name, item in menu_items_ui.items():
+            if name == view_name:
+                item.classes(add=active_class)
+            else:
+                item.classes(remove=active_class)
+
+        centered_views = ['home', 'button1', 'button2', 'button3', 'button4', 'button5', 'button6', 'button7', 'button8', 'button9', 'authorize']
+
+        if view_name in centered_views:
+            content_container.classes(add='items-center')
+        else:
+            content_container.classes(remove='items-center')
+
         content_container.clear()
-        if view_name == 'home':
-            render_home()
-        elif view_name == 'button1':
-            create_runner_ui()
-        elif view_name == 'button2':
-            create_settings_ui()
-        elif view_name == 'button4':
-            create_card_editor_ui()
-        elif view_name == 'button5':
-            create_device_management_ui()
-        elif view_name == 'button6':
-            create_userid_ui()
-        elif view_name == 'button7':
-            create_text_ui()
-        elif view_name == 'button8':
-            create_shorturl_ui()
-        elif view_name == 'button9':
-            create_device_list_ui()
-        elif view_name == 'authorize':
-            create_authorize_ui()
+        with content_container:
+            ui.label(MENU_ITEMS[view_name]['name']).classes('text-3xl font-bold mb-4')
+            ui.separator().classes('mb-8')
+            if view_name == 'home':
+                render_home()
+            elif view_name == 'button1':
+                create_runner_ui()
+            elif view_name == 'button2':
+                create_settings_ui()
+            elif view_name == 'button4':
+                create_card_editor_ui()
+            elif view_name == 'button5':
+                create_device_management_ui()
+            elif view_name == 'button6':
+                create_userid_ui()
+            elif view_name == 'button7':
+                create_text_ui()
+            elif view_name == 'button8':
+                create_shorturl_ui()
+            elif view_name == 'button9':
+                create_device_list_ui()
+            elif view_name == 'authorize':
+                create_authorize_ui()
+            else:
+                readme_display = ui.html("<h3>正在加载主页内容...</h3>")
+
+                async def load_readme():
+                    try:
+                        async with httpx.AsyncClient(timeout=10.0) as c:
+                            r = await c.get(README_URL)
+                            r.raise_for_status()
+                            readme_display.set_content(r.text)
+                    except Exception as e:
+                        readme_display.set_content(
+                            f"<h3>加载主页内容失败</h3>"
+                            f"<p><strong>URL:</strong> <code>{README_URL}</code></p>"
+                            f"<p><strong>错误:</strong> <code>{type(e).__name__}</code></p>"
+                        )
+
+                ui.timer(0.5, load_readme, once=True)
+
+    with ui.left_drawer().classes('bg-gray-100 dark:bg-gray-800 p-4'):
+        with ui.row().classes('items-center gap-2 px-4 pb-4'):
+            ui.icon('menu', size='md')
+            ui.label('导航菜单').classes('text-lg font-semibold')
+
+        for name, details in MENU_ITEMS.items():
+            with ui.item(on_click=lambda n=name: change_view(n)) \
+                    .classes('w-full rounded-lg cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700') as item:
+                menu_items_ui[name] = item
+                with ui.item_section().props('avatar'):
+                    ui.icon(details['icon'])
+                with ui.item_section():
+                    ui.label(details['name'])
+
+    with ui.page_sticky(position='bottom-right', x_offset=90, y_offset=40):
+        with ui.row().classes('gap-4'):
+            ui.button(on_click=lambda: dark.set_value(not dark.value), color='primary') \
+                .props('fab') \
+                .bind_icon_from(dark, 'value', lambda v: 'light_mode' if v else 'dark_mode') \
+                .tooltip('切换亮色/暗色主题')
 
     change_view('home')
 
 
-def logout():
-    app.storage.user.clear()
-    ui.navigate.to('/')
-
-
-@ui.page('/')
-def index_page():
-    if app.storage.user.get('authenticated', False):
-        main_page()
-    else:
-        with ui.column().classes('w-full h-screen items-center justify-center bg-cover'):
-            with ui.card().classes('w-96 rounded-2xl shadow-xl p-8'):
-                with ui.column().classes('w-full items-center gap-4'):
-                    ui.image('/img/login_bg.webp').classes('w-40 h-40 rounded-full object-cover')
-                    ui.label('小红书控制面板').classes('text-2xl font-bold')
-                    username_input = ui.input('用户名', placeholder='请输入用户名').props('outlined').classes('w-full')
-                    password_input = ui.input('密码', password=True, placeholder='请输入密码').props('outlined').classes('w-full')
-
-                    async def do_login():
-                        from auth import authenticate
-                        if authenticate(username_input.value or '', password_input.value or ''):
-                            app.storage.user.update({'authenticated': True, 'username': username_input.value})
-                            ui.navigate.to('/')
-                        else:
-                            ui.notify('用户名或密码错误！', color='negative')
-
-                    ui.button('登 录', on_click=do_login, icon='login', color='primary').classes('w-full')
-
 app.add_static_files('/img', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'img'))
-ui.run(storage_secret=os.getenv('NICEGUI_SECRET', 'change_me_in_production'), title='小红书控制面板', reload=False, dark=False)
+app.on_startup(connect_to_mongo)
+app.on_shutdown(close_mongo_connection)
+
+ui.run(storage_secret='a_very_long_and_super_secret_string_123!@#',
+       title='小红书控制面板(Beta_3.0)',
+       reload=False,
+       dark=False)
