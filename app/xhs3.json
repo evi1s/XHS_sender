@@ -1,0 +1,72 @@
+{
+  "id": "3558",
+  "type": "dslGoodsCard",
+  "width": 800,
+  "height": 800,
+  "itemId": "item_3558",
+  "selfHigh": false,
+  "sellerId": "item_3558",
+  "userInfo": {
+    "avatar": "https://pbs.twimg.com/media/GhPPyKYaMAAG5tR.jpg",
+    "userId": "user_3558",
+    "userLink": "https://xhslink.com/m/1o6FjbvWfyS",
+    "userName": "薯​‌队‌长‍推​荐‌🔥‍‍"
+  },
+  "contentId": "3558",
+  "minVersion": 0,
+  "defaultImage": "https://bpic-oss.588ku.com/element_pic/25/06/19/869ebb45ec23564aebda5d006e109bca.jpg",
+  "defaultTitle": "这​是‍‍​一‍个‌‌测‍​‍试‌‌，‌点‍‍‍看​‍看‌‍.‌‍‍",
+  "purchaseInfo": {
+    "status": "0"
+  },
+  "templateName": "im_goods_card_kitt",
+  "expectedPrice": "0",
+  "goodsBaseInfo": {
+    "link": "https://xhslink.com/m/1o6FjbvWfyS",
+    "image": {
+      "url": "https://bpic-oss.588ku.com/element_pic/25/06/19/869ebb45ec23564aebda5d006e109bca.jpg",
+      "width": 800,
+      "height": 800
+    },
+    "skuId": "sku_3558",
+    "title": "这​是‍‍​一‍个‌‌测‍​‍试‌‌，‌点‍‍‍看​‍看‌‍.‌‍‍",
+    "hostId": "3558",
+    "itemId": "3558",
+    "buyable": true,
+    "sellerId": "seller_3558",
+    "displayLines": 2
+  },
+  "searchContent": "这​是‍‍​一‍个‌‌测‍​‍试‌‌，‌点‍‍‍看​‍看‌‍.‌‍‍",
+  "showMenuIdList": [
+    2,
+    3,
+    5,
+    6,
+    7,
+    16
+  ],
+  "sourceDeeplink": "xhsdiscover://item_detail/3558?source=CHAT_SHOP_GOODS_CARD",
+  "tagStrategyMap": {
+    "after_price": [
+      {
+        "type": "sold",
+        "tag_type": 1,
+        "tag_content": {
+          "content": "点‌击​卡​‌片‍​‌,‍ ‌​进‍入‍​​网‍站​‌测‌‍‌试​"
+        }
+      }
+    ]
+  },
+  "defaultDeeplink": [
+    {
+      "bizParam": {
+        "eventId": "short_link",
+        "shortLink": "https://xhslink.com/m/1o6FjbvWfyS"
+      },
+      "event": "request",
+      "priority": 1
+    }
+  ],
+  "defaultSubTitle": "这​是‍‍​一‍个‌‌测‍​‍试‌‌，‌点‍‍‍看​‍看‌‍.‌‍‍",
+  "searchPrefixContent": "这​是‍‍​一‍个‌‌测‍​‍试‌‌，‌点‍‍‍看​‍看‌‍.‌‍‍"
+}

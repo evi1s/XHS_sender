@@ -1,0 +1,29 @@
+{
+  "time": "旅‍‍​‍‍‌‌‌‌‌‌‍‌​‍‍​​‍‌‌​‌行‌‍‍‌​‍‍‍​‌‌‌​‌‍​‍​‌​博‍‍‌‍‍‍‌​‌​​‍​‍‌‍​‌‌主‍​‍‍‌‍‌​‌​​‌​‍​​​‌‍‍‍‍/‍​‍​‍‍‍​​‌‍‍‍​​​‌‍‍​‍‌旅‌‍‌‌​‌‍​‌‌‌‌‍‌‍‍‌‍‍​‌​行‍​‌​​​‍‌‍​‍‍‌‌​‍创​‍‍‍​​‍​‌‌​​​‍​‌​​​‍‍‍‍‍‍业​​‍​‍‌‌​‍​​‌​‌​‍‌​‍‍​​",
+  "type": "dslMeetupEventCard",
+  "image": "https://gd-filems.dancf.com/gaoding/gaoding/29681/68e41bd1a50b472d8e853224e1479dbb.jpg",
+  "title": "拿‍​起‍​大‌‍喇​‌叭​‍‍ ‍|‌‍ ‍世‍‍界​安‌​​静‍​了​",
+  "deeplink": "https://xhslink.com/m/1o6FjbvWfyS",
+  "location": "官‌‌‍‍​‍​‍‌‌​​‍​‍​‌‍‍​‌​‍方‍​‍​‍​‌‍​‍‌‍‌​‌​‌‍‍‍‌‌‍认​‍‌‌‌‌‍‌‍‍​​​‌​‌‌​‍‍‍证​​​​‍‌​‍‍‌‍‌‌‌‍‌​‌‍‌‍",
+  "contentId": "7634486804378812416",
+  "coverImage": "https://gd-filems.dancf.com/gaoding/gaoding/29681/68e41bd1a50b472d8e853224e1479dbb.jpg",
+  "frontChain": "666",
+  "fullScreen": false,
+  "defaultImage": "https://gd-filems.dancf.com/gaoding/gaoding/29681/68e41bd1a50b472d8e853224e1479dbb.jpg",
+  "defaultTitle": "拿‍​起‍​大‌‍喇​‌叭​‍‍ ‍|‌‍ ‍世‍‍界​安‌​​静‍​了​",
+  "templateName": "im_meetup_event_card",
+  "searchContent": " ",
+  "showMenuIdList": [
+    2,
+    3,
+    5,
+    6
+  ],
+  "defaultDeeplink": "https://xhslink.com/m/1o6FjbvWfyS",
+  "defaultSubTitle": "拿‍​起‍​大‌‍喇​‌叭​‍‍ ‍|‌‍ ‍世‍‍界​安‌​​静‍​了​",
+  "searchPrefixContent": "[活动]",
+  "customDefaultiOSBundle": "XYMessagUIKit",
+  "customDefaultTemplateName": "",
+  "customDefaultAndroidBundle": "",
+  "clickReferenceMessageDeeplink": "https://xhslink.com/m/1o6FjbvWfyS"
+}
