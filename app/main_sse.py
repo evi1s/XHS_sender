@@ -55,17 +55,15 @@ class DeviceManager:
     def close(self): self.client.close()
 
 def call_remote_proxy(payload: dict) -> (bool, dict):
-    """
-    调用远程执行任务，并以流式方式处理SSE响应。
-    """
+    
     logger.info("准备调用远程服务器执行任务 (SSE模式)...")
     headers = {"X-API-Key": config.PROXY_API_KEY, "Content-Type": "application/json"}
     final_status_data = None
-
+    
     try:
         with requests.post(config.PROXY_SERVER_URL, headers=headers, json=payload, timeout=300, stream=True) as response:
             response.raise_for_status()
-
+            
             for line in response.iter_lines():
                 if line:
                     line_str = line.decode('utf-8')
@@ -75,7 +73,7 @@ def call_remote_proxy(payload: dict) -> (bool, dict):
                             if not data_str: continue
 
                             data = json.loads(data_str)
-
+                            
                             if 'log' in data:
                                 logger.info(f"[SERVER] {data['log']}")
                             elif 'status' in data:
@@ -100,7 +98,7 @@ def call_remote_proxy(payload: dict) -> (bool, dict):
         return False, {"status": "error", "reason": f"发信帐号异常: {e}"}
 
 
-STALE_CLAIM_MINUTES = 30
+STALE_CLAIM_MINUTES = 30  
 
 NETWORK_ERROR_KEYWORDS = (
     "网络或连接错误", "客户端连接关闭", "获取IP失败", "无法连接到服务器",
@@ -116,18 +114,18 @@ AUTH_ERROR_KEYWORDS = (
 )
 
 class NetworkRetryAbortError(Exception):
-    """网络/连接类错误（含"获取小红书IP失败"）：立即终止重试，由外层统一退回接收方。"""
+    
     pass
 
 def _is_network_error(reason) -> bool:
-    """判断远程返回的失败原因是否为网络/连接类（非业务）错误。"""
+    
     if not reason:
         return False
     r = str(reason).lower()
     return any(k.lower() in r for k in NETWORK_ERROR_KEYWORDS)
 
 def _is_auth_error(reason) -> bool:
-    """判断远程返回的失败原因是否为确定性鉴权/计费错误（key无效/套餐过期/次数用完等）。"""
+    
     if not reason:
         return False
     r = str(reason).lower()
@@ -135,11 +133,7 @@ def _is_auth_error(reason) -> bool:
 
 
 def _claim_receiver(user_id_collection):
-    """标记式领取一个接收方：文档保留在集合中，仅打上 claimed 标记。
-
-    相比 find_one_and_delete，即使进程异常退出，userid 也不会丢失；
-    超过 STALE_CLAIM_MINUTES 的孤儿领取会自动重新可领取。
-    """
+    
     stale_before = datetime.datetime.now() - datetime.timedelta(minutes=STALE_CLAIM_MINUTES)
     return user_id_collection.find_one_and_update(
         {'$or': [
@@ -153,7 +147,7 @@ def _claim_receiver(user_id_collection):
 
 
 def _release_receiver(user_id_collection, receiver_doc):
-    """将接收方退回 MongoDB（清除领取标记），userid 不丢失。"""
+    
     if not receiver_doc:
         return False
     result = user_id_collection.update_one(
@@ -187,19 +181,19 @@ def client_main_task(sender_device_config, check_user_device_config, db_collecti
                     else: logger.warning(f"卡片模板文件 '{card_json_path}' 不存在，本次私信将不发送卡片。")
                 if not message_text and not card_template: raise ValueError("消息内容和卡片模板均为空，请检查配置或文件。")
                 payload = {"sender_device_config": sender_device_config, "check_user_device_config": check_user_device_config, "receiver_id": receiver_id, "message_text": message_text, "card_template": card_template}
-
+                
                 success, response_data = call_remote_proxy(payload)
-
+                
                 if success:
-
+                    
                     user_id_collection.delete_one({'_id': receiver_doc['_id']})
                     task_completed = True
                     device_manager_instance.increment_daily_usage(userid); device_manager_instance.update_next_send_time(userid, time.time() + config.SUCCESS_SEND_INTERVAL); device_manager_instance.clear_consecutive_failure(userid)
                     logger.success(f"[{userid}] 本次任务完成，该账号状态已更新。"); return
                 else:
                     reason = response_data.get('reason') if response_data else "未知远程错误"
-
-
+                    
+                    
                     if _is_network_error(reason):
                         raise NetworkRetryAbortError(f"网络或连接错误，终止重试并退回接收方: {str(reason).replace('网络或连接错误: ', '网络超时或帐号异常!')}")
                     if _is_auth_error(reason):
@@ -208,15 +202,15 @@ def client_main_task(sender_device_config, check_user_device_config, db_collecti
                     logger.warning(f"任务尝试失败 (第 {attempt + 1}/{config.MAX_RETRY_ATTEMPTS} 次)，5秒后重试...")
                     time.sleep(5)
             except NetworkRetryAbortError:
-
+                
                 raise
-            except Exception as e:
+            except Exception as e: 
                 last_exception = e
-                logger.error(f"任务期间发生本地异常 (第 {attempt + 1}/{config.MAX_RETRY_ATTEMPTS} 次): {e}");
+                logger.error(f"任务期间发生本地异常 (第 {attempt + 1}/{config.MAX_RETRY_ATTEMPTS} 次): {e}"); 
                 time.sleep(5)
         raise last_exception
     except Exception as final_exception:
-
+        
         if receiver_doc and not task_completed:
             _release_receiver(user_id_collection, receiver_doc)
             logger.warning(f"[{userid}] 已将接收方 {receiver_doc.get('user_id')} 的信息回滚（重新入队，userid 未丢失）。")
@@ -225,11 +219,11 @@ def client_main_task(sender_device_config, check_user_device_config, db_collecti
 
 if __name__ == '__main__':
     log_filename_suffix = sys.argv[1] if len(sys.argv) > 1 else "scheduler"; log_filepath = os.path.join(log_dir, f"client-{log_filename_suffix}.log"); logger.add(log_filepath, level="INFO", format="{time:YYYY-MM-DD HH:mm:ss}|{level}|{message}", rotation="10 MB", encoding='utf-8')
-
+    
     device_manager = DeviceManager()
 
     checker_config = device_manager.get_device_by_userid(config.CHECK_USER_ID)
-
+    
     if not checker_config:
         logger.critical(f"错误：无法在集合 '{config.MONGO_DEVICE_COLLECTION}' 中找到主账号 '{config.CHECK_USER_ID}'。")
         device_manager.close()
@@ -252,7 +246,7 @@ if __name__ == '__main__':
                         mongo_client = MongoClient(f'mongodb://{config.MONGO_HOST}:{config.MONGO_PORT}/', username=config.MONGO_USERNAME, password=config.MONGO_PASSWORD, authSource=config.MONGO_AUTH_SOURCE)
                         db = mongo_client[config.MONGO_DB_NAME]
                         db_collections = {"user_id": db[config.MONGO_USER_ID_COLLECTION], "send_text": db[config.MONGO_SEND_TEXT_COLLECTION], "comment": db[config.MONGO_COMMENT_COLLECTION]}
-
+                        
                         client_main_task(claimed_user, checker_config, db_collections, device_manager)
 
                     except Exception as e:

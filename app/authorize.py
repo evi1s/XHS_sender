@@ -8,7 +8,7 @@ CONFIG_FILE = 'config.py'
 
 
 def mask_key(key: str) -> str:
-    """脱敏：保留前4后4，中间星号数量=被隐藏的字符数，可看出完整长度；短key全星号"""
+    
     if not key:
         return ''
     if len(key) <= 8:
@@ -17,9 +17,9 @@ def mask_key(key: str) -> str:
 
 
 def create_ui():
-    """服务器连接与 API Key 设置"""
+    
 
-    full_key = {'value': ''}
+    full_key = {'value': ''}  
 
     def load_config():
         config = {}
@@ -44,21 +44,21 @@ def create_ui():
             ui.notify(f'加载配置文件失败: {e}', color='negative')
 
     def toggle_key_visibility():
-        """眼睛按钮：切换 脱敏值 <-> 完整值 显示"""
+        
         if proxy_key_input.value == full_key['value'] and full_key['value']:
-
+            
             proxy_key_input.set_value(mask_key(full_key['value']))
         else:
-
+            
             proxy_key_input.set_value(full_key['value'])
 
     async def save_config():
         url = proxy_url_input.value
         api_key_input_val = proxy_key_input.value
 
-
-
-
+        
+        
+        
         if api_key_input_val in (mask_key(full_key['value']), full_key['value']) and full_key['value']:
             api_key = full_key['value']
         else:
@@ -89,10 +89,10 @@ def create_ui():
             with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
                 f.writelines(lines)
 
-
+            
             full_key['value'] = api_key
             proxy_key_input.set_value(mask_key(api_key))
-            importlib.reload(config)
+            importlib.reload(config)  
             ui.notify('配置已保存', color='positive')
         except Exception as e:
             ui.notify(f'保存配置失败: {e}', color='negative')

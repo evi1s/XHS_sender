@@ -1,5 +1,4 @@
 import httpx
-import os
 import time
 import psutil
 import config
@@ -10,6 +9,7 @@ from runapp import create_runner_ui
 from config import ADMIN_USERNAME, ADMIN_PASSWORD, PROXY_SERVER_URL, MONGO_USER_ID_COLLECTION, PROXY_API_KEY
 from settings import create_settings_ui
 from setcard import create_card_editor_ui
+from setcard2 import create_card_editor_ui2
 from devices.ui import create_device_management_ui
 from devices.list_ui import create_device_list_ui
 from devices.data import get_devices_collection, get_collection
@@ -32,13 +32,14 @@ MENU_ITEMS = {
     'button6': {'name': '客户管理', 'icon': 'group_add'},
     'button7': {'name': '文字消息', 'icon': 'rate_review'},
     'button4': {'name': '卡片消息', 'icon': 'style'},
+    'button10': {'name': '卡片消息2', 'icon': 'style'},
     'button8': {'name': '短链生成', 'icon': 'link'},
     'authorize': {'name': '授权设置', 'icon': 'vpn_key'},
 }
 
 
 def _stat_card(title: str, icon: str, color: str) -> dict:
-    """仪表盘统计卡片，返回 value/sub 标签引用以便定时刷新。"""
+    
     with ui.card().classes('w-60 rounded-2xl shadow-lg bg-white dark:bg-gray-800'):
         with ui.row().classes('items-center gap-4'):
             with ui.element('div').classes(f'w-12 h-12 rounded-xl bg-gradient-to-br {color} flex items-center justify-center shrink-0'):
@@ -46,12 +47,12 @@ def _stat_card(title: str, icon: str, color: str) -> dict:
             with ui.column().classes('gap-0'):
                 ui.label(title).classes('text-sm text-gray-500 dark:text-gray-400')
                 value_label = ui.label('--').classes('text-3xl font-bold')
-                sub_label = ui.label('加载中...').classes('text-xs text-gray-400')
+                sub_label = ui.label('加载中...').classes('text-xs text-gray-400 break-all')
     return {'value': value_label, 'sub': sub_label}
 
 
 async def _refresh_stats(cards: dict):
-    """刷新主页全部统计卡片（设备/使用量/userid/内存/网络/服务端）。"""
+    
     try:
         proc = getattr(runapp, 'SCRIPT_PROCESS', None)
         running = proc is not None and getattr(proc, 'returncode', None) is None
@@ -165,7 +166,7 @@ async def _refresh_stats(cards: dict):
 
 
 def render_home():
-    """主页仪表盘：系统概览统计 + 公告区。"""
+    
     with ui.column().classes('w-full max-w-5xl gap-6'):
         with ui.card().classes('w-full rounded-2xl'):
             readme_display = ui.html('<div style="text-align:right;width:100%"><div style="display:inline-block;text-align:left;background-color:#fdf7e9;border-left:5px solid #f0ad4e;padding:12px 15px;border-radius:5px"><h3 style="margin:0;color:#c08b3a">正在加载公告...</h3></div></div>')
@@ -220,7 +221,7 @@ async def main_page():
 
         with ui.column().classes('absolute-center items-center gap-4'):
             with ui.card().classes('w-96 p-8 rounded-lg shadow-xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm'):
-                ui.label('小红书控制面板(3.0)').classes('self-center text-2xl font-semibold text-gray-800 dark:text-white')
+                ui.label('小红书控制面板(3.3)').classes('self-center text-2xl font-semibold text-gray-800 dark:text-white')
                 username = ui.input('账号').props('outlined dense').classes('w-full')
                 password = ui.input('密码', password=True, password_toggle_button=True).props('outlined dense').classes('w-full')
 
@@ -265,7 +266,7 @@ async def main_page():
             else:
                 item.classes(remove=active_class)
 
-        centered_views = ['home', 'button1', 'button2', 'button3', 'button4', 'button5', 'button6', 'button7', 'button8', 'button9', 'authorize']
+        centered_views = ['home', 'button1', 'button2', 'button3', 'button4', 'button5', 'button6', 'button7', 'button8', 'button9', 'button10', 'authorize']
 
         if view_name in centered_views:
             content_container.classes(add='items-center')
@@ -283,7 +284,9 @@ async def main_page():
             elif view_name == 'button2':
                 create_settings_ui()
             elif view_name == 'button4':
-                create_card_editor_ui()
+                create_card_editor_ui(switch_view=change_view)
+            elif view_name == 'button10':
+                create_card_editor_ui2(switch_view=change_view)
             elif view_name == 'button5':
                 create_device_management_ui()
             elif view_name == 'button6':
@@ -320,6 +323,8 @@ async def main_page():
             ui.label('导航菜单').classes('text-lg font-semibold')
 
         for name, details in MENU_ITEMS.items():
+            if name == 'button10':
+                continue
             with ui.item(on_click=lambda n=name: change_view(n)) \
                     .classes('w-full rounded-lg cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700') as item:
                 menu_items_ui[name] = item
@@ -338,11 +343,11 @@ async def main_page():
     change_view('home')
 
 
-app.add_static_files('/img', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'img'))
+app.add_static_files('/img', '/root/nicegui/img')
 app.on_startup(connect_to_mongo)
 app.on_shutdown(close_mongo_connection)
 
 ui.run(storage_secret='a_very_long_and_super_secret_string_123!@#',
-       title='小红书控制面板(Beta_3.0)',
+       title='小红书控制面板(Beta_3.3)',
        reload=False,
        dark=False)
