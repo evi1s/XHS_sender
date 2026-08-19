@@ -1,6 +1,7 @@
                        
 
-   import httpx
+   
+import httpx
 from nicegui import app, ui
 import config
 
