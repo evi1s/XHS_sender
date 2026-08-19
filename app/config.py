@@ -1,15 +1,6 @@
 import os
 
 
-"""
-
-配置文件
---------------------------
-这里定义了整个应用所需的所有配置，包括数据库连接信息和各个模块配置。
-当需要修改配置时，只应修改此文件。
-"""
-
-
 PROXY_SERVER_URL = os.getenv("PROXY_SERVER_URL", "")
 PROXY_API_KEY = os.getenv("PROXY_API_KEY", "")
 
@@ -51,7 +42,9 @@ TASK_INTERVAL = 30
 SEND_MODE_CARD_ONLY = 1
 SEND_MODE_TEXT_ONLY = 2
 SEND_MODE_CARD_AND_TEXT = 3
+SEND_MODE_CARD2_ONLY = 4
 MESSAGE_SEND_MODE = 2
+CARD_AND_TEXT_CARD = 1
 
 
 CHECK_USER_ID = os.getenv('CHECK_USER_ID', '')

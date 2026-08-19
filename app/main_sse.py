@@ -1,4 +1,4 @@
-
+                                        
 import time
 import datetime
 import random
@@ -56,6 +56,8 @@ class DeviceManager:
 
 def call_remote_proxy(payload: dict) -> (bool, dict):
     
+
+       
     logger.info("准备调用远程服务器执行任务 (SSE模式)...")
     headers = {"X-API-Key": config.PROXY_API_KEY, "Content-Type": "application/json"}
     final_status_data = None
@@ -98,7 +100,7 @@ def call_remote_proxy(payload: dict) -> (bool, dict):
         return False, {"status": "error", "reason": f"发信帐号异常: {e}"}
 
 
-STALE_CLAIM_MINUTES = 30  
+STALE_CLAIM_MINUTES = 30                             
 
 NETWORK_ERROR_KEYWORDS = (
     "网络或连接错误", "客户端连接关闭", "获取IP失败", "无法连接到服务器",
@@ -106,26 +108,26 @@ NETWORK_ERROR_KEYWORDS = (
     "ConnectionError", "Connection", "ProxyError", "timeout", "超时",
 )
 
-
-
+                                    
+                                     
 AUTH_ERROR_KEYWORDS = (
     "无效的 api key", "缺少 api key", "套餐已过期", "次数已用完",
-    "客户已被暂停",
+    "客户已被暂停", "卡片模式未激活", "卡片发送需",
 )
 
 class NetworkRetryAbortError(Exception):
-    
+                                                   
     pass
 
 def _is_network_error(reason) -> bool:
-    
+                                      
     if not reason:
         return False
     r = str(reason).lower()
     return any(k.lower() in r for k in NETWORK_ERROR_KEYWORDS)
 
 def _is_auth_error(reason) -> bool:
-    
+                                                     
     if not reason:
         return False
     r = str(reason).lower()
@@ -134,6 +136,10 @@ def _is_auth_error(reason) -> bool:
 
 def _claim_receiver(user_id_collection):
     
+
+
+
+       
     stale_before = datetime.datetime.now() - datetime.timedelta(minutes=STALE_CLAIM_MINUTES)
     return user_id_collection.find_one_and_update(
         {'$or': [
@@ -147,7 +153,7 @@ def _claim_receiver(user_id_collection):
 
 
 def _release_receiver(user_id_collection, receiver_doc):
-    
+                                            
     if not receiver_doc:
         return False
     result = user_id_collection.update_one(
@@ -171,8 +177,10 @@ def client_main_task(sender_device_config, check_user_device_config, db_collecti
             try:
                 message_text = None; card_template = None;
                 if config.MESSAGE_SEND_MODE in [config.SEND_MODE_TEXT_ONLY, config.SEND_MODE_CARD_AND_TEXT]: message_text = db_collections['send_text'].aggregate([{'$sample': {'size': 1}}]).next()['text']; message_text = message_text + ''.join(random.choice('!@#$%^&*()') for _ in range(random.randint(1, 2))); logger.info(f"[{userid}] 文本消息已加噪，准备发送。")
-                if config.MESSAGE_SEND_MODE in [config.SEND_MODE_CARD_ONLY, config.SEND_MODE_CARD_AND_TEXT]:
+                if config.MESSAGE_SEND_MODE in [config.SEND_MODE_CARD_ONLY, config.SEND_MODE_CARD2_ONLY, config.SEND_MODE_CARD_AND_TEXT]:
                     card_json_path = 'xhs3.json'
+                    if config.MESSAGE_SEND_MODE == config.SEND_MODE_CARD2_ONLY or (config.MESSAGE_SEND_MODE == config.SEND_MODE_CARD_AND_TEXT and getattr(config, 'CARD_AND_TEXT_CARD', 1) == 2):
+                        card_json_path = 'xhs2.json'
                     if os.path.exists(card_json_path):
                         try:
                             with open(card_json_path, 'r', encoding='utf-8') as f: card_template = json.load(f)
@@ -185,15 +193,15 @@ def client_main_task(sender_device_config, check_user_device_config, db_collecti
                 success, response_data = call_remote_proxy(payload)
                 
                 if success:
-                    
+                                                   
                     user_id_collection.delete_one({'_id': receiver_doc['_id']})
                     task_completed = True
                     device_manager_instance.increment_daily_usage(userid); device_manager_instance.update_next_send_time(userid, time.time() + config.SUCCESS_SEND_INTERVAL); device_manager_instance.clear_consecutive_failure(userid)
                     logger.success(f"[{userid}] 本次任务完成，该账号状态已更新。"); return
                 else:
                     reason = response_data.get('reason') if response_data else "未知远程错误"
-                    
-                    
+                                                      
+                                                   
                     if _is_network_error(reason):
                         raise NetworkRetryAbortError(f"网络或连接错误，终止重试并退回接收方: {str(reason).replace('网络或连接错误: ', '网络超时或帐号异常!')}")
                     if _is_auth_error(reason):
@@ -202,7 +210,7 @@ def client_main_task(sender_device_config, check_user_device_config, db_collecti
                     logger.warning(f"任务尝试失败 (第 {attempt + 1}/{config.MAX_RETRY_ATTEMPTS} 次)，5秒后重试...")
                     time.sleep(5)
             except NetworkRetryAbortError:
-                
+                                                     
                 raise
             except Exception as e: 
                 last_exception = e
@@ -210,7 +218,7 @@ def client_main_task(sender_device_config, check_user_device_config, db_collecti
                 time.sleep(5)
         raise last_exception
     except Exception as final_exception:
-        
+                                                 
         if receiver_doc and not task_completed:
             _release_receiver(user_id_collection, receiver_doc)
             logger.warning(f"[{userid}] 已将接收方 {receiver_doc.get('user_id')} 的信息回滚（重新入队，userid 未丢失）。")
