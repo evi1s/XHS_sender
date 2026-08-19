@@ -1,6 +1,6 @@
-                                            
+                       
 
-import httpx
+   import httpx
 from nicegui import app, ui
 import config
 
@@ -8,7 +8,7 @@ SHORT_URL_PATH = '/short-url'
 
 
 def _server_base() -> str:
-                                              
+                                                        
     base = config.PROXY_SERVER_URL
     for suffix in ('/execute-task', '/execute_task', '/health'):
         if suffix in base:
@@ -17,7 +17,7 @@ def _server_base() -> str:
 
 
 async def generate_short_url_backend(long_url: str, user_cookie: str) -> str:
-                                              
+                                        
     url = _server_base() + SHORT_URL_PATH
     headers = {
         'X-API-Key': config.PROXY_API_KEY,
