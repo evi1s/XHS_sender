@@ -1,3 +1,5 @@
+                                            
+
 import httpx
 from nicegui import app, ui
 import config
@@ -6,6 +8,7 @@ SHORT_URL_PATH = '/short-url'
 
 
 def _server_base() -> str:
+                                              
     base = config.PROXY_SERVER_URL
     for suffix in ('/execute-task', '/execute_task', '/health'):
         if suffix in base:
@@ -14,6 +17,7 @@ def _server_base() -> str:
 
 
 async def generate_short_url_backend(long_url: str, user_cookie: str) -> str:
+                                              
     url = _server_base() + SHORT_URL_PATH
     headers = {
         'X-API-Key': config.PROXY_API_KEY,
@@ -31,6 +35,8 @@ async def generate_short_url_backend(long_url: str, user_cookie: str) -> str:
             detail = e.response.json().get('detail', e.response.text)
         except Exception:
             detail = e.response.text
+        if '未激活' in detail or '次数已用完' in detail or '短链' in detail:
+            raise Exception(detail)
         raise Exception(f"远程生成短链接失败 (HTTP {e.response.status_code}): {detail}")
     except Exception as e:
         raise Exception(f"远程生成短链接时发生网络或连接错误: {e}")
