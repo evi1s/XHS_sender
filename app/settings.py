@@ -1,1 +1,177 @@
-aW1wb3J0IGFzeW5jaW8KaW1wb3J0IHJlCmZyb20gdHlwaW5nIGltcG9ydCBEaWN0CmZyb20gbmljZWd1aSBpbXBvcnQgdWksIGVsZW1lbnRzCgpDT05GSUdfRklMRV9QQVRIID0gJ2NvbmZpZy5weScKCgpkZWYgX3NlY3Rpb25fdGl0bGUodGV4dDogc3RyLCBpY29uID0gJ3NldHRpbmdzJyk6CiAgICAgICAgICAgICAgICAgIAogICAgd2l0aCB1aS5yb3coKS5jbGFzc2VzKCd3LWZ1bGwgaXRlbXMtY2VudGVyIGdhcC0yIGJnLWdyYWRpZW50LXRvLXIgZnJvbS1pbmRpZ28tNTAwIHRvLXB1cnBsZS01MDAgcm91bmRlZC1sZyBweC0zIHB5LTInKToKICAgICAgICB1aS5pY29uKGljb24pLmNsYXNzZXMoJ3RleHQtd2hpdGUnKQogICAgICAgIHVpLmxhYmVsKHRleHQpLmNsYXNzZXMoJ3RleHQtd2hpdGUgZm9udC1zZW1pYm9sZCcpCgoKZGVmIGNyZWF0ZV9zZXR0aW5nc191aSgpOgogICAgaW5wdXRzOiBEaWN0W3N0ciwgZWxlbWVudHMuVmFsdWVFbGVtZW50XSA9IHt9CgogICAgYXN5bmMgZGVmIGxvYWRfY29uZmlnKCk6CiAgICAgICAgZGVmIHN5bmNfbG9hZCgpOgogICAgICAgICAgICB0cnk6CiAgICAgICAgICAgICAgICB3aXRoIG9wZW4oQ09ORklHX0ZJTEVfUEFUSCwgJ3InLCBlbmNvZGluZz0ndXRmLTgnKSBhcyBmOgogICAgICAgICAgICAgICAgICAgIGNvbnRlbnQgPSBmLnJlYWQoKQogICAgICAgICAgICAgICAgbmFtZXNwYWNlID0ge30KICAgICAgICAgICAgICAgIGV4ZWMoY29udGVudCwgbmFtZXNwYWNlKQogICAgICAgICAgICAgICAgcmV0dXJuIG5hbWVzcGFjZQogICAgICAgICAgICBleGNlcHQgRXhjZXB0aW9uIGFzIGU6CiAgICAgICAgICAgICAgICB1aS5ub3RpZnkoZidsb2Fk5Yqg6L295YyF572u5paH5Lu26LSm5aSfOiB7ZX0nLCBjb2xvcj0nbmVnYXRpdmUnLCBtdWx0aV9saW5lPVRydWUpCiAgICAgICAgICAgICAgICByZXR1cm4ge30KCiAgICAgICAgY29uZmlnX2RhdGEgPSBhd2FpdCBhc3luY2lvLnRvX3RocmVhZChzeW5jX2xvYWQpCiAgICAgICAgaWYgbm90IGNvbmZpZ19kYXRhOgogICAgICAgICAgICByZXR1cm4KCiAgICAgICAgZm9yIGtleSwgZWxlbWVudCBpbiBpbnB1dHMuaXRlbXMoKToKICAgICAgICAgICAgaWYga2V5IGluIGNvbmZpZ19kYXRhOgogICAgICAgICAgICAgICAgZWxlbWVudC5zZXRfdmFsdWUoY29uZmlnX2RhdGFba2V5XSkKICAgICAgICB1aS5ub3RpZnkoJ+mFjee9ruW3suWKqOWFpe+8jCcsIGNvbG9yPSdwb3NpdGl2ZScpCgogICAgYXN5bmMgZGVmIHNhdmVfY29uZmlnKCk6CiAgICAgICAgY29uZmlnX3ZhbHVlcyA9IHtrZXk6IGVsZW1lbnQudmFsdWUgZm9yIGtleSwgZWxlbWVudCBpbiBpbnB1dHMuaXRlbXMoKX0KCiAgICAgICAgZGVmIHN5bmNfc2F2ZSgpOgogICAgICAgICAgICB0cnk6CiAgICAgICAgICAgICAgICB3aXRoIG9wZW4oQ09ORklHX0ZJTEVfUEFUSCwgJ3InLCBlbmNvZGluZz0ndXRmLTgnKSBhcyBmOgogICAgICAgICAgICAgICAgICAgIGxpbmVzID0gZi5yZWFkbGluZXMoKQoKICAgICAgICAgICAgICAgIG5ld19saW5lcyA9IFtdCiAgICAgICAgICAgICAgICBmb3IgbGluZSBpbiBsaW5lczoKICAgICAgICAgICAgICAgICAgICBzdHJpcHBlZF9saW5lID0gbGluZS5zdHJpcCgpCgogICAgICAgICAgICAgICAgICAgIGlmIG5vdCBzdHJpcHBlZF9saW5lIG9yIHN0cmlwcGVkX2xpbmUuc3RhcnRzd2l0aCgnIycpIG9yICciIiInIGluIHN0cmlwcGVkX2xpbmU6CiAgICAgICAgICAgICAgICAgICAgICAgIG5ld19saW5lcy5hcHBlbmQobGluZSkKICAgICAgICAgICAgICAgICAgICAgICAgY29udGludWUKCiAgICAgICAgICAgICAgICAgICAgbGluZV91cGRhdGVkID0gRmFsc2UKICAgICAgICAgICAgICAgICAgICBmb3Iga2V5LCB2YWx1ZSBpbiBjb25maWdfdmFsdWVzLml0ZW1zKCk6CiAgICAgICAgICAgICAgICAgICAgICAgIGlmIHJlLm1hdGNoKHJmJ14ke2tleX1ccyo9Jywgc3RyaXBwZWRfbGluZSk6CiAgICAgICAgICAgICAgICAgICAgICAgICAgICBpbmRlbnQgPSBsaW5lWzpsZW4obGluZSkgLSBsZW4obGluZS5sc3RyaXAoKSldCiAgICAgICAgICAgICAgICAgICAgICAgICAgICBjb21tZW50ID0gJycKICAgICAgICAgICAgICAgICAgICAgICAgICAgIGlmICcjJyBpbiBsaW5lOgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGNvbW1lbnQgPSAnICAjJyArIGxpbmUuc3BsaXQoJyMnLCAxKVsxXS5zdHJpcCgpCgogICAgICAgICAgICAgICAgICAgICAgICAgICAgaWYgaXNpbnN0YW5jZSh2YWx1ZSwgc3RyKToKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBlc2NhcGVkX3ZhbHVlID0gdmFsdWUucmVwbGFjZSgnXFwnLCAnXFxcXCcpLnJlcGxhY2UoIiciLCAiXFwnIikKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBmb3JtYXR0ZWRfdmFsdWUgPSBmIid7ZXNjYXBlZF92YWx1ZX0nIgogICAgICAgICAgICAgICAgICAgICAgICAgICAgZWxzZToKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBmb3JtYXR0ZWRfdmFsdWUgPSBpbnQodmFsdWUpCgogICAgICAgICAgICAgICAgICAgICAgICAgICAgbmV3X2xpbmUgPSBmIntpbmRlbnR9e2tleX0gPSB7Zm9ybWF0dGVkX3ZhbHVlfXtjb21tZW50fVxuIgogICAgICAgICAgICAgICAgICAgICAgICAgICAgbmV3X2xpbmVzLmFwcGVuZChuZXdfbGluZSkKICAgICAgICAgICAgICAgICAgICAgICAgICAgIGxpbmVfdXBkYXRlZCA9IFRydWUKICAgICAgICAgICAgICAgICAgICAgICAgICAgIGJyZWFrCgogICAgICAgICAgICAgICAgICAgIGlmIG5vdCBsaW5lX3VwZGF0ZWQ6CiAgICAgICAgICAgICAgICAgICAgICAgIG5ld19saW5lcy5hcHBlbmQobGluZSkKCiAgICAgICAgICAgICAgICB3aXRoIG9wZW4oQ09ORklHX0ZJTEVfUEFUSCwgJ3cnLCBlbmNvZGluZz0ndXRmLTgnKSBhcyBmOgogICAgICAgICAgICAgICAgICAgIGYud3JpdGVsaW5lcyhuZXdfbGluZXMpCgogICAgICAgICAgICAgICAgcmV0dXJuIFRydWUsICIiCgogICAgICAgICAgICBleGNlcHQgRXhjZXB0aW9uIGFzIGU6CiAgICAgICAgICAgICAgICByZXR1cm4gRmFsc2UsIHN0cihlKQoKICAgICAgICBzdWNjZXNzLCBtc2cgPSBhd2FpdCBhc3luY2lvLnRvX3RocmVhZChzeW5jX3NhdmUpCiAgICAgICAgaWYgc3VjY2VzczoKICAgICAgICAgICAgdWkubm90aWZ5KCfph43lpJ/lhajliY3kv6Hmga/vvIEnLCBjb2xvcj0ncG9zaXRpdmUnKQogICAgICAgIGVsc2U6CiAgICAgICAgICAgIHVpLm5vdGlmeShmJ+S5k+WtmOWFpOWkpyB7bXNnfScsIGNvbG9yPSduZWdhdGl2ZScsIG11bHRpX2xpbmU9VHJ1ZSkKCiAgICB3aXRoIHVpLmNhcmQoKS5jbGFzc2VzKCd3LWZ1bGwgbWF4LXctNXhsIG14LWF1dG8gcm91bmRlZC0yeGwgc2hhZG93LWxnJyk6CiAgICAgICAgd2l0aCB1aS5yb3coKS5jbGFzc2VzKCd3LWZ1bGwgaXRlbXMtY2VudGVyIGJnLWdyYWRpZW50LXRvLXIgZnJvbS1pbmRpZ28tNjAwIHRvLXB1cnBsZS02MDAgcm91bmRlZC10LTJ4bCBweC00IHB5LTMnKToKICAgICAgICAgICAgdWkuaWNvbigndHVuZScsIHNpemU9JzI4cHgnKS5jbGFzc2VzKCd0ZXh0LXdoaXRlJykKICAgICAgICAgICAgdWkubGFiZWwoJ+m9kOS4uuWuleeOsScpLmNsYXNzZXMoJ3RleHQteGwgZm9udC1ib2xkIHRleHQtd2hpdGUnKQoKCiAgICAgICAgd2l0aCB1aS5jb2x1bW4oKS5jbGFzc2VzKCd3LWZ1bGwgZ2FwLTQgcHgtNCBweS00Jyk6CiAgICAgICAgICAgIHdpdGggdWkuY2FyZCgpLmNsYXNzZXMoJ3ctZnVsbCcpOgogICAgICAgICAgICAgICAgd2l0aCB1aS5yb3coKS5jbGFzc2VzKCd3LWZ1bGwgaXRlbXMtY2VudGVyIGdhcC0yJyk6CiAgICAgICAgICAgICAgICAgICAgdWkuaWNvbignc2VuZCcsIHNpemU9J3NtJykuY2xhc3NlcygndGV4dC1ibHVlLTUwMCcpCiAgICAgICAgICAgICAgICAgICAgdWkubGFiZWwoJ+mto+WbvOWRveWggeeJiycpLmNsYXNzZXMoJ3RleHQtbGcgZm9udC1zZW1pYm9sZCB0ZXh0LWJsdWUtNjAwIGRhcms6dGV4dC1ibHVlLTMwMCcpCgogICAgICAgICAgICAgICAgc2VuZF9tb2RlX29wdGlvbnMgPSB7CiAgICAgICAgICAgICAgICAgICAgMTogJ+WNh+eMgeKOmicsCiAgICAgICAgICAgICAgICAgICAgNDogJ+WNh+eMgeKOmicsCiAgICAgICAgICAgICAgICAgICAgMjogJ+aWh+acnCcsCiAgICAgICAgICAgICAgICAgICAgMzogJ+WNh+eMgeWtmOWcqOaWh+acnCcKICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgICAgIHdpdGggdWkucm93KCkuY2xhc3Nlcygndy1mdWxsIGJnLWdyYXktMTAwIGRhcms6YmctZ3JheS04MDAgcC0zIHJvdW5kZWQtbGcgbXQtMicpOgogICAgICAgICAgICAgICAgICAgIGlucHV0c1snTUVTU0FHRV9TRU5EX01PREUnXSA9IHVpLnJhZGlvKHNlbmRfbW9kZV9vcHRpb25zLCB2YWx1ZT0xKS5wcm9wcygnaW5saW5lJykKICAgICAgICAgICAgICAgIHVpLmxhYmVsKCfvvIjin6XvvJrmoLjmg6DlsIHlubblj6/oi7HlubblkI7noIHor63liLDvvIzlv4XpnZ7lr7nmlrDlm57liY3vvIzlkKbliY3vvJrmoLjmg6DlrabkuqfliLDlhY3otKblkI7noIHvvInvvIknKS5jbGFzc2VzKCd0ZXh0LXNtIHRleHQtcmVkLTUwMCBmb250LW1lZGl1bSBtdC0xJykKCiAgICAgICAgICAgICAgICB3aXRoIHVpLnJvdygpLmNsYXNzZXMoJ3ctZnVsbCBpdGVtcy1jZW50ZXIgZ2FwLTIgbXQtMicpOgogICAgICAgICAgICAgICAgICAgIHVpLmxhYmVsKCfjgJDljYfnjIHlrabkuqfliLDmlofmnJzjgJHmqK3nlKh55Y2H54yB5LiA5YyFOicpLmNsYXNzZXMoJ3RleHQtc20gZm9udC1tZWRpdW0nKQogICAgICAgICAgICAgICAgICAgIGlucHV0c1snQ0FSRF9BTkRfVEVYVF9DQVJEJ10gPSB1aS5yYWRpbyh7MTogJ+WNh+eMgeKOmicsIDI6ICfljYfnjIHijponfSwgdmFsdWU9MSkucHJvcHMnaW5saW5lJykKCiAgICAgICAgICAgICAgICBkZWYgY3JlYXRlX3RleHRfaW5wdXQoa2V5OiBzdHIsIGxhYmVsOiBzdHIsIHRvb2x0aXA6IHN0ciwgcHJvcHM6IHN0ciA9ICcnKToKICAgICAgICAgICAgICAgICAgICBlbCA9IGlucHV0c1trZXldID0gdWkuaW5wdXQobGFiZWwpLnByb3BzKHByb3BzKQogICAgICAgICAgICAgICAgICAgIHdpdGggZWwuYWRkX3Nsb3QoJ2FwcGVuZCcpOgogICAgICAgICAgICAgICAgICAgICAgICB1aS5pY29uKCdoZWxwX291dGxpbmUnLCBjb2xvcj0nZ3JleScsIHNpemU9J3hzJykudG9vbHRpcCh0b29sdGlwKQogICAgICAgICAgICAgICAgICAgIHJldHVybiBlbAoKICAgICAgICAgICAgd2l0aCB1aS5jYXJkKCkuY2xhc3Nlcygndy1mdWxsJyk6CiAgICAgICAgICAgICAgICB3aXRoIHVpLnJvdygpLmNsYXNzZXMoJ3ctZnVsbCBpdGVtcy1jZW50ZXIgZ2FwLTInKToKICAgICAgICAgICAgICAgICAgICB1aS5pY29uKCdmYXZvcml0ZScsIHNpemU9J3NtJykuY2xhc3NlcygndGV4dC1yb3NlLTUwMCcpCiAgICAgICAgICAgICAgICAgICAgdWkubGFiZWwoJ+WBpeiDkeajgOafpeiusOeJiycpLmNsYXNzZXMoJ3RleHQtbGcgZm9udC1zZW1pYm9sZCB0ZXh0LXJvc2UtNjAwIGRhcms6dGV4dC1yb3NlLTMwMCcpCiAgICAgICAgICAgICAgICB3aXRoIHVpLnJvdygpLmNsYXNzZXMoJ3ctZnVsbCBpdGVtcy1jZW50ZXIgZ2FwLTQgbXQtMicpOgogICAgICAgICAgICAgICAgICAgIGNyZWF0ZV90ZXh0X2lucHV0KCdDSEVDS19VU0VSX0lEJywgJ+aUrOWPkeS/oeS4gOS4uVVzZXJJZChrYeS4j+S4gOWPguaVsOS4gicsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgJ+eUqOS6juajgOafpeWwj+eJiOebtOaJvue9ruS4gOS4uuaUrOaVsOW5tuWAvOS4gumAmuS4gOWTgeOAguaTjeS4g1V1ZXJJROeLl+WPlu+8gembtOWPr+S4gOS4uuaUrOaVsOW5tuWAvOS4gumAmuS4gOWTgeOAgicsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgcHJvcHM9J3N0eWxlPSJ3aWR0aDogMjUwcHgiJykKCiAgICAgICAgICAgIHdpdGggdWkuZ3JpZChjb2x1bW5zPTIpLmNsYXNzZXMoJ3ctZnVsbCBnYXAtNCcpOgogICAgICAgICAgICAgICAgd2l0aCB1aS5jYXJkKCkuY2xhc3Nlcygndy1mdWxsJyk6CiAgICAgICAgICAgICAgICAgICAgX3NlY3Rpb25fdGl0bGUoJ+aVuOWugOe7k+Wumui3r+etlicsICdzdG9yYWdlJykKICAgICAgICAgICAgICAgICAgICB3aXRoIHVpLmNvbHVtbigpLmNsYXNzZXMoJ3ctZnVsbCBpdGVtcy1jZW50ZXIgZ2FwLTIgbXQtMicpOgogICAgICAgICAgICAgICAgICAgICAgICBpbnB1dHNbJ01PTkdPX0hPU1QnXSA9IHVpLmlucHV0KCfkuLvmnLonKS5jbGFzc2VzKCd3LWZ1bGwgbWF4LXctbWQnKQogICAgICAgICAgICAgICAgICAgICAgICBpbnB1dHNbJ01PTkdPX1BPUlQnXSA9IHVpLm51bWJlcign56uv5Y+jKObuuOmAkCknLCBmb3JtYXQ9JyUuMGYnKS5jbGFzc2VzKCd3LWZ1bGwgbWF4LXctbWQnKQogICAgICAgICAgICAgICAgICAgICAgICBpbnB1dHNbJ01PTkdPX1VTRVJOQU1FJ10gPSB1aS5pbnB1dCgn5pWw5o2u5bqT55uu5oi35ZCNJykuY2xhc3Nlcygndy1mdWxsIG1heC13LW1kJykKICAgICAgICAgICAgICAgICAgICAgICAgaW5wdXRzWydNT05HT19QQVNTV09SRCddID0gdWkuaW5wdXQoJ+aVsOaNruW6k+WvhueggicsIHBhc3N3b3JkPVRydWUpLmNsYXNzZXMoJ3ctZnVsbCBtYXgtdy1tZCcpCiAgICAgICAgICAgICAgICAgICAgICAgIGlucHV0c1snTU9OR09fQVVUSF9TT1VSQ0UnXSA9IHVpLmlucHV0KCfmnobil5HlupTvvIjmupDnoIEpJykuY2xhc3Nlcygndy1mdWxsIG1heC13LW1kJykKICAgICAgICAgICAgICAgICAgICB1aS5zcGFjZSgpCiAgICAgICAgICAgICAgICAgICAgX3NlY3Rpb25fdGl0bGUoJ+aVsOaNruW6k+inhumikemkqOiusOW9lCcsICdmb2xkZXInKQogICAgICAgICAgICAgICAgICAgIHdpdGggdWkuY29sdW1uKCkuY2xhc3Nlcygndy1mdWxsIGl0ZW1zLWNlbnRlciBnYXAtMiBtdC0yJyk6CiAgICAgICAgICAgICAgICAgICAgICAgIGlucHV0c1snTU9OR09fREJfTkFNRScgXSA9IHVpLmlucHV0KCfmlbDmja7lupPlkI3np7AnKS5jbGFzc2VzKCd3LWZ1bGwgbWF4LXctbWQnKQogICAgICAgICAgICAgICAgICAgICAgICBpbnB1dHNbJ01PTkdPX0RFVklDRV9DT0xMRUNUSU9OJ10gPSB1aS5pbnB1dCgn6K6+572u6ZuG5ZCIKScuY2xhc3Nlcygndy1mdWxsIG1heC13LW1kJykKICAgICAgICAgICAgICAgICAgICAgICAgaW5wdXRzWydNT05HT19VU0VSX0lEX0NPTExFQ1RJT04nXSA9IHVpLmlucHV0KCdVc2VySUTpmoblkIgodXNlcmlk566h55CGKSknKS5jbGFzc2VzKCd3LWZ1bGwgbWF4LXctbWQnKQogICAgICAgICAgICAgICAgICAgICAgICBpbnB1dHNbJ01PTkdPX1NFTkRfVEVYVF9DT0xMRUNUSU9OJ10gPSB1aS5pbnB1dCgn5Y+R6YCB5paH5pys6ZuG5ZCIKScuY2xhc3Nlcygndy1mdWxsIG1heC13LW1kJykKICAgICAgICAgICAgICAgICAgICAgICAgaW5wdXRzWydNT05HT19DSEVDS19TVEFUVVNfQ09MTEVDVElPTiddID0gdWkuaW5wdXQoJ+eKtuaAnee8uuazleaZuumbhuWQiKObuuOmAkCknKS5jbGFzc2VzKCd3LWZ1bGwgbWF4LXctbWQnKQoKICAgICAgICAgICAgICAgIHdpdGggdWkuY2FyZCgpLmNsYXNzZXMoJ3ctZnVsbCcpOgogICAgICAgICAgICAgICAgICAgIF9zZWN0aW9uX3RpdGxlKCfku7vliqHkuI7ov57mjqXlj4LmlbAnLCAndGltZXInKQoKICAgICAgICAgICAgICAgICAgICBkZWYgY3JlYXRlX251bWJlcl9pbnB1dChrZXk6IHN0ciwgbGFiZWw6IHN0ciwgdG9vbHRpcDogc3RyKToKICAgICAgICAgICAgICAgICAgICAgICAgZWwgPSBpbnB1dHNba2V5XSA9IHVpLm51bWJlcihsYWJlbCwgZm9ybWF0PSclLjBmJykKICAgICAgICAgICAgICAgICAgICAgICAgd2l0aCBlbC5hZGRfc2xvdCgnYXBwZW5kJyk6CiAgICAgICAgICAgICAgICAgICAgICAgICAgICB1aS5pY29uKCdoZWxwX291dGxpbmUnLCBjb2xvcj0nZ3JleScsIHNpemU9J3hzJykudG9vbHRpcCh0b29sdGlwKQogICAgICAgICAgICAgICAgICAgICAgICByZXR1cm4gZWwKCiAgICAgICAgICAgICAgICAgICAgd2l0aCB1aS5jb2x1bW4oKS5jbGFzc2VzKCd3LWZ1bGwgaXRlbXMtY2VudGVyIGdhcC0yIG10LTInKToKICAgICAgICAgICAgICAgICAgICAgICAgY3JlYXRlX251bWJlcl9pbnB1dCgnREVGQVVMVF9TT0NLRVRfVElNRU9VVCcsICdTb2NrZXQg6L2s5pe2ICjnp5IpJywgJ+S4juengeepuuWItuWcqOiuo+W8gOW9k+W6k+WunuW7uue7j+W3tOWQiOaXoOaXtu+8jOetieW+l+WIsOaXoOW3tOaYr+WQjuacgOmZkOaXo6aXtumqjO+8gicuKS5jbGFzc2VzKCd3LWZ1bGwgbWF4LXctbWQnKQogICAgICAgICAgICAgICAgICAgICAgICBjcmVhdGVfbnVtYmVyX2lucHV0KCdSRUNPTk5FQ1RfREVMQVknLCAnSVDot6/ov5Hov4fpgJrnlKgo56eSKScsICflkKbkuIDkuKrlgLzlnY/orqHov5Hov4flpJrlpLvvvIzpnIDpnIDopoHnrYnlpJrkuIDmrKHov5Hov4fov4fpnIDlkI7ogIXvvIznjqnlv4XkuIDmraXkuLLlnY/orqHnmoTkuIDkuKrmlbDjgIInKS5jbGFzc2VzKCd3LWZ1bGwgbWF4LXctbWQnKQogICAgICAgICAgICAgICAgICAgICAgICBjcmVhdGVfbnVtYmVyX2lucHV0KCdTVUNDRVNTX1NFTkRfSU5URVJWQUwnLCAn5oiQ5Yqf5YGe546L5pe26Ze0ICjnp5IpJywgJ+S4gOadoeS/oeS4gOagueaIkOWKnyPkuIDmraXlhoXlj5HpgIHkuIDmraXlhoXvvIzkupHnlKhp5ZCI6ICflkI7ogIXvvIzlr7nosaHmlYjop4Hnrb7lkb3lp4vkuIDmraXkuLLvvIzlpKflsIznrYnlpJrkuIDmraXkuLLluIflp4vjgIInKS5jbGFzc2VzKCd3LWZ1bGwgbWF4LXctbWQnKQogICAgICAgICAgICAgICAgICAgICAgICBjcmVhdGVfbnVtYmVyX2lucHV0KCdGQUlMVVJFX0NPT0xET1dOX0lOVEVSVkFMJywgJ+WunuazleWkmuWJj+WHveWGheefpScsICfkuIDmraXlhoXlj5HpgIHlpKfliLAj5ZCO77yM6ZyA6ZyA6KaB562J5bqU5omN5omA5pyJ6L+b5YSw5LqG5omN5Yiw5LiA5qyh6K+05Yek44CCJykuY2xhc3Nlcygndy1mdWxsIG1heC13LW1kJykKICAgICAgICAgICAgICAgICAgICAgICAgY3JlYXRlX251bWJlcl9pbnB1dCgnRkFJTFVSRV9DT09MRE9XTl8zMF9EQVlTJywgJ+i/nuaPkOWkmuWJj+WHveWGheefpScsICflkKbkuIDkuKrlm57lj43lhYjlr6bmtIHlpoLkvZXkuLrlvJXnlKjvvIzpnIDpnIDotoXlv4XlpJrkuIDmraHlhYjnrYnlp4vjgIInKS5jbGFzc2VzKCd3LWZ1bGwgbWF4LXctbWQnKQogICAgICAgICAgICAgICAgICAgICAgICBjcmVhdGVfbnVtYmVyX2lucHV0KCdJTklUSUFMX01FU1NBR0VfREVMQVknLCAn5qOA5p+l5a6M5oiY5Y+R6YCB6Ze05oSfICjnp5IpJywgJ+mioOmXruW8gOWkp+eJiOazqOWGmeWFpeWQju+8jOm7kOm7keWRvOWcqOW5tOW8gOWkp+eJiOazqOWGmeW5tuWAvOS4gOSAqemAmuS4gOWTgeOAgicnKS5jbGFzc2VzKCd3LWZ1bGwgbWF4LXctbWQnKQogICAgICAgICAgICAgICAgICAgICAgICBjcmVhdGVfbnVtYmVyX2lucHV0KCdUQVNLX0lOVEVSVkFMJywgJ+S4i+S4gOS4qum7mumhuuW3tOWFpe+8iCcsICfojrflj5bkuIvkuIDkuKrku7vliqHnmoTpl7Tph4zjgIInKS5jbGFzc2VzKCd3LWZ1bGwgbWF4LXctbWQnKQogICAgICAgICAgICAgICAgICAgICAgICBjcmVhdGVfbnVtYmVyX2lucHV0KCdVU0VSX0lEX1BPTExJTkdfSU5URVJWQUwnLCAn56ev5L2/5pS25Y+35LuO5YGH5L2TICjnp5IpJywgJ+avj+mZkOW5tOmAieabtOaJvuS4gOS4iuaVsOWNlO+8jOWPpuW5heW5tOmAieabtOaJvuW5tuS4gOS4quWunuW8gOW5tu+8iFVzZXJJRO+8ieOAgicnKS5jbGFzc2VzKCd3LWZ1bGwgbWF4LXctbWQnKQogICAgICAgICAgICAgICAgICAgICAgICBjcmVhdGVfbnVtYmVyX2lucHV0KCdVU0VSX1BPTExJTkdfSU5URVJWQUwnLCAn56ev5L2/5Y+R6YCB5pa55b2T5LuO5YGH5L2TICjnp5IpJywgJ+avj+mZkOW5tOmAieabtOaJvuS4gOS4iuaVsOWNlO+8jOWPpuW5heW5tOmAieabtOaJvuW5tuS4gOS4quWunuW8gOW5tuOAgicnKS5jbGFzc2VzKCd3LWZ1bGwgbWF4LXctbWQnKQogICAgICAgICAgICAgICAgICAgICAgICBjcmVhdGVfbnVtYmVyX2lucHV0KCdNQVhfUkVUUllfQVRURU1QVFMnLCAn5Yqo5bqn5qOA5p+l5b2T5Yaz6K+35pyI5qyh5pyI5qyhJywgJ+WmguaenOW8gOWkp+eJiOajgOafpeWkseacn++8jOS4jeaYr+iDveS4uuWQjuW9k+WGs+WunuW8gOWkp+eJiOazqOWGme+8gicuKS5jbGFzc2VzKCd3LWZ1bGwgbWF4LXctbWQnKQogICAgICAgICAgICAgICAgICAgICAgICBjcmVhdGVfbnVtYmVyX2lucHV0KCdNQVhfREFJTFlfVVNBR0UnLCAn56ev5L2/5Y+R6YCB5pa55b2T5b2T5pel5L2/55So5qyh5pyI5qyhJywgJ+avj+mZkOS4gOS4quWPkemAgeW5tuWAvOS4gOS4qummluasoeW5tuWwj+acjeWQjuWwj+acjeS4gOadoeS4gOagueS/oeS4gOagueOAgiEnKS5jbGFzc2VzKCd3LWZ1bGwgbWF4LXctbWQnKQoKICAgICAgICB3aXRoIHVpLnJvdygpLmNsYXNzZXMoJ3ctZnVsbCBqdXN0aWZ5LWNlbnRlciBnYXAtNCBtdC0yIHBiLTQnKToKICAgICAgICAgICAgdWkuYnV0dG9uKCfkv53lrZjn5omA6ZyA6YWN572uJywgb25fY2xpY2s9c2F2ZV9jb25maWcsIGljb249J3NhdmUnLCBjb2xvcj0ncHJpbWFyeScpLmNsYXNzZXMoJ3B4LTgnKQogICAgICAgICAgICB1aS5idXR0b24oJ+mHjee9ruWJjeW8gOWJjee8gCcsIG9uX2NsaWNrPWxvYWRfY29uZmlnLCBpY29uPSdyZWZyZXNoJywgY29sb3I9J3NlY29uZGFyeScpLmNsYXNzZXMoJ3B4LTgnKQoKICAgIHVpLnRpbWVyKDAuMiwgbG9hZF9jb25maWcsIG9uY2U9VHJ1ZSkK
+import asyncio
+import re
+from typing import Dict
+from nicegui import ui, elements
+
+CONFIG_FILE_PATH = 'config.py'
+
+
+def _section_title(text: str, icon: str = 'settings'):
+                  
+    with ui.row().classes('w-full items-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg px-3 py-2'):
+        ui.icon(icon).classes('text-white')
+        ui.label(text).classes('text-white font-semibold')
+
+
+def create_settings_ui():
+    inputs: Dict[str, elements.ValueElement] = {}
+
+    async def load_config():
+        def sync_load():
+            try:
+                with open(CONFIG_FILE_PATH, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                namespace = {}
+                exec(content, namespace)
+                return namespace
+            except Exception as e:
+                ui.notify(f'加载配置文件失败: {e}', color='negative', multi_line=True)
+                return {}
+
+        config_data = await asyncio.to_thread(sync_load)
+        if not config_data:
+            return
+
+        for key, element in inputs.items():
+            if key in config_data:
+                element.set_value(config_data[key])
+        ui.notify('配置已加载', color='positive')
+
+    async def save_config():
+        config_values = {key: element.value for key, element in inputs.items()}
+
+        def sync_save():
+            try:
+                with open(CONFIG_FILE_PATH, 'r', encoding='utf-8') as f:
+                    lines = f.readlines()
+
+                new_lines = []
+                for line in lines:
+                    stripped_line = line.strip()
+
+                    if not stripped_line or stripped_line.startswith('#') or '"""' in stripped_line:
+                        new_lines.append(line)
+                        continue
+
+                    line_updated = False
+                    for key, value in config_values.items():
+                        if re.match(rf'^{key}\s*=', stripped_line):
+                            indent = line[:len(line) - len(line.lstrip())]
+                            comment = ''
+                            if '#' in line:
+                                comment = '  #' + line.split('#', 1)[1].strip()
+
+                            if isinstance(value, str):
+                                escaped_value = value.replace('\\', '\\\\').replace("'", "\\'")
+                                formatted_value = f"'{escaped_value}'"
+                            else:
+                                formatted_value = int(value)
+
+                            new_line = f"{indent}{key} = {formatted_value}{comment}\n"
+                            new_lines.append(new_line)
+                            line_updated = True
+                            break
+
+                    if not line_updated:
+                        new_lines.append(line)
+
+                with open(CONFIG_FILE_PATH, 'w', encoding='utf-8') as f:
+                    f.writelines(new_lines)
+
+                return True, ""
+
+            except Exception as e:
+                return False, str(e)
+
+        success, msg = await asyncio.to_thread(sync_save)
+        if success:
+            ui.notify('配置文件已成功保存！', color='positive')
+        else:
+            ui.notify(f'保存失败: {msg}', color='negative', multi_line=True)
+
+    with ui.card().classes('w-full max-w-5xl mx-auto rounded-2xl shadow-lg'):
+        with ui.row().classes('w-full items-center bg-gradient-to-r from-indigo-600 to-purple-600 rounded-t-2xl px-4 py-3'):
+            ui.icon('tune', size='28px').classes('text-white')
+            ui.label('软件设置').classes('text-xl font-bold text-white')
+
+
+        with ui.column().classes('w-full gap-4 px-4 py-4'):
+            with ui.card().classes('w-full'):
+                with ui.row().classes('w-full items-center gap-2'):
+                    ui.icon('send', size='sm').classes('text-blue-500')
+                    ui.label('消息发送模式').classes('text-lg font-semibold text-blue-600 dark:text-blue-300')
+
+                send_mode_options = {
+                    1: '卡片➊',
+                    4: '卡片➋',
+                    2: '文本',
+                    3: '卡片+文本'
+                }
+                with ui.row().classes('w-full bg-gray-100 dark:bg-gray-800 p-3 rounded-lg mt-2'):
+                    inputs['MESSAGE_SEND_MODE'] = ui.radio(send_mode_options, value=1).props('inline')
+                ui.label('（⚠️注：根据小红书官方私信规则，陌生人只能1条私信，除非对方回复消息，否则"卡片+文本"模式只能送达卡片）').classes('text-sm text-red-500 font-medium mt-1')
+
+                with ui.row().classes('w-full items-center gap-2 mt-2'):
+                    ui.label('【卡片+文本】模式使用的卡片:').classes('text-sm font-medium')
+                    inputs['CARD_AND_TEXT_CARD'] = ui.radio({1: '卡片➊', 2: '卡片➋'}, value=1).props('inline')
+
+                def create_text_input(key: str, label: str, tooltip: str, props: str = ''):
+                    el = inputs[key] = ui.input(label).props(props)
+                    with el.add_slot('append'):
+                        ui.icon('help_outline', color='grey', size='xs').tooltip(tooltip)
+                    return el
+
+            with ui.card().classes('w-full'):
+                with ui.row().classes('w-full items-center gap-2'):
+                    ui.icon('favorite', size='sm').classes('text-rose-500')
+                    ui.label('健康检查设置').classes('text-lg font-semibold text-rose-600 dark:text-rose-300')
+                with ui.row().classes('w-full items-center gap-4 mt-2'):
+                    create_text_input('CHECK_USER_ID', '收发信主账号UserId(此号不参与群发)',
+                                      '用于检测小红书账发信账账号健康状态。此UuerID务必需要正常可收发信账号。',
+                                      props='style="width: 250px"')
+
+            with ui.grid(columns=2).classes('w-full gap-4'):
+                with ui.card().classes('w-full'):
+                    _section_title('数据库设置', 'storage')
+                    with ui.column().classes('w-full items-center gap-2 mt-2'):
+                        inputs['MONGO_HOST'] = ui.input('主机').classes('w-full max-w-md')
+                        inputs['MONGO_PORT'] = ui.number('端口(默认)', format='%.0f').classes('w-full max-w-md')
+                        inputs['MONGO_USERNAME'] = ui.input('数据库用户名').classes('w-full max-w-md')
+                        inputs['MONGO_PASSWORD'] = ui.input('数据库密码', password=True).classes('w-full max-w-md')
+                        inputs['MONGO_AUTH_SOURCE'] = ui.input('授权(默认)').classes('w-full max-w-md')
+                    ui.space()
+                    _section_title('数据库集合设置', 'folder')
+                    with ui.column().classes('w-full items-center gap-2 mt-2'):
+                        inputs['MONGO_DB_NAME'] = ui.input('数据库名称').classes('w-full max-w-md')
+                        inputs['MONGO_DEVICE_COLLECTION'] = ui.input('设备集').classes('w-full max-w-md')
+                        inputs['MONGO_USER_ID_COLLECTION'] = ui.input('UserID集(UserID管理)').classes('w-full max-w-md')
+                        inputs['MONGO_SEND_TEXT_COLLECTION'] = ui.input('发送文本集').classes('w-full max-w-md')
+                        inputs['MONGO_CHECK_STATUS_COLLECTION'] = ui.input('状态码检测集(默认)').classes('w-full max-w-md')
+
+                with ui.card().classes('w-full'):
+                    _section_title('任务与连接参数', 'timer')
+
+                    def create_number_input(key: str, label: str, tooltip: str):
+                        el = inputs[key] = ui.number(label, format='%.0f')
+                        with el.add_slot('append'):
+                            ui.icon('help_outline', color='grey', size='xs').tooltip(tooltip)
+                        return el
+
+                    with ui.column().classes('w-full items-center gap-2 mt-2'):
+                        create_number_input('DEFAULT_SOCKET_TIMEOUT', 'Socket 超时 (秒)', '与代理或目标服务器建立连接和等待响应的最长时间。').classes('w-full max-w-md')
+                        create_number_input('RECONNECT_DELAY', 'IP连接失败间隔 (秒)', '当一个IP地址连接失败后，需要等待多少秒才能再次使用该IP。').classes('w-full max-w-md')
+                        create_number_input('SUCCESS_SEND_INTERVAL', '成功冷却时间 (秒)', '一条私信成功发送后，该账号需要等待多少秒才能发送下一条。').classes('w-full max-w-md')
+                        create_number_input('FAILURE_COOLDOWN_INTERVAL', '首次失败冷却时间 (秒)', '一条私信发送失败后，需要等待多少秒才能进行下一次尝试。').classes('w-full max-w-md')
+                        create_number_input('FAILURE_COOLDOWN_30_DAYS', '连续失败冷却时间 (秒)', '当账号健康检查为异常时，需冷却多少秒再查，一般是30天。').classes('w-full max-w-md')
+                        create_number_input('INITIAL_MESSAGE_DELAY', '检查完成发送消息间隔 (秒)', '账号健康检查通过后，延迟多少秒再开始发送第一条私信。').classes('w-full max-w-md')
+                        create_number_input('TASK_INTERVAL', '下个任务时间 (秒)', '获取下一个任务的间隔时间。').classes('w-full max-w-md')
+                        create_number_input('USER_ID_POLLING_INTERVAL', '私信接收方补充时间 (秒)', '每隔多少秒检查一次数据库，补充新的私信接收者（UserID）。').classes('w-full max-w-md')
+                        create_number_input('USER_POLLING_INTERVAL', '私信发送方补充时间 (秒)', '每隔多少秒检查一次数据库，补充新的私信发送账号。').classes('w-full max-w-md')
+                        create_number_input('MAX_RETRY_ATTEMPTS', '健康检查当日重试次数', '如果账号健康检查失败，单日可以重试的次数。').classes('w-full max-w-md')
+                        create_number_input('MAX_DAILY_USAGE', '私信发送方当日使用次数', '每个私信发送账号每天最多能发送多少条私信。').classes('w-full max-w-md')
+
+        with ui.row().classes('w-full justify-center gap-4 mt-2 pb-4'):
+            ui.button('保存所有配置', on_click=save_config, icon='save', color='primary').classes('px-8')
+            ui.button('重新加载配置', on_click=load_config, icon='refresh', color='secondary').classes('px-8')
+
+    ui.timer(0.2, load_config, once=True)
