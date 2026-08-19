@@ -49,7 +49,7 @@ def create_settings_ui():
                 for line in lines:
                     stripped_line = line.strip()
 
-                    if not stripped_line or stripped_line.startswith('#') or '\"\"\"' in stripped_line:
+                    if not stripped_line or stripped_line.startswith('#') or '"""' in stripped_line:
                         new_lines.append(line)
                         continue
 
@@ -109,7 +109,7 @@ def create_settings_ui():
                 }
                 with ui.row().classes('w-full bg-gray-100 dark:bg-gray-800 p-3 rounded-lg mt-2'):
                     inputs['MESSAGE_SEND_MODE'] = ui.radio(send_mode_options, value=1).props('inline')
-                ui.label('（⚠️注：根据小红书官方私信规则，陌生人只能1条私信，除非对方回复消息，否则\"卡片+文本\"模式只能送达卡片）').classes('text-sm text-red-500 font-medium mt-1')
+                ui.label('（⚠️注：根据小红书官方私信规则，陌生人只能1条私信，除非对方回复消息，否则"卡片+文本"模式只能送达卡片）').classes('text-sm text-red-500 font-medium mt-1')
 
                 with ui.row().classes('w-full items-center gap-2 mt-2'):
                     ui.label('【卡片+文本】模式使用的卡片:').classes('text-sm font-medium')
@@ -128,7 +128,7 @@ def create_settings_ui():
                 with ui.row().classes('w-full items-center gap-4 mt-2'):
                     create_text_input('CHECK_USER_ID', '收发信主账号UserId(此号不参与群发)',
                                       '用于检测小红书账发信账账号健康状态。此UuerID务必需要正常可收发信账号。',
-                                      props='style=\"width: 250px\"')
+                                      props='style="width: 250px"')
 
             with ui.grid(columns=2).classes('w-full gap-4'):
                 with ui.card().classes('w-full'):
