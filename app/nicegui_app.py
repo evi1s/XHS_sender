@@ -1,3 +1,4 @@
+import asyncio
 import httpx
 import time
 import psutil
@@ -19,6 +20,12 @@ from xhs_shorturl import create_ui as create_shorturl_ui
 from authorize import create_ui as create_authorize_ui
 import runapp
 
+try:
+    import update as updater
+    HAS_UPDATER = True
+except Exception:
+    HAS_UPDATER = False
+
 README_URL = "https://commteam.it.com/web/readme.txt"
 LOGIN_BG_URL = "/img/login_bg.webp"
 CONTACT_US_URL = ""
@@ -39,7 +46,7 @@ MENU_ITEMS = {
 
 
 def _stat_card(title: str, icon: str, color: str) -> dict:
-                                          
+    
     with ui.card().classes('w-60 rounded-2xl shadow-lg bg-white dark:bg-gray-800'):
         with ui.row().classes('items-center gap-4'):
             with ui.element('div').classes(f'w-12 h-12 rounded-xl bg-gradient-to-br {color} flex items-center justify-center shrink-0'):
@@ -54,7 +61,7 @@ def _stat_card(title: str, icon: str, color: str) -> dict:
 
 
 async def _refresh_stats(cards: dict):
-                                              
+    
     try:
         proc = getattr(runapp, 'SCRIPT_PROCESS', None)
         running = proc is not None and getattr(proc, 'returncode', None) is None
@@ -131,7 +138,7 @@ async def _refresh_stats(cards: dict):
         else:
             cards['server']['value'].set_text('在线' if online else f'HTTP {status}')
             cards['server']['sub'].set_text(f'状态码:{status} Key有效')
-            cards['server']['value'].classes(remove='text-red-500 text-green-500', add='text-green-500' if online else 'text-red-500')
+            cards['server']['value'].classes(remove='text-green-500 text-red-500', add='text-green-500' if online else 'text-red-500')
     except Exception as e:
         cards['server']['value'].set_text('离线')
         cards['server']['sub'].set_text(f'{type(e).__name__}')
@@ -172,10 +179,60 @@ async def _refresh_stats(cards: dict):
 
 
 def render_home():
-                             
+    
     with ui.column().classes('w-full max-w-5xl gap-6'):
         with ui.card().classes('w-full rounded-2xl'):
             readme_display = ui.html('<div style="text-align:right;width:100%"><div style="display:inline-block;text-align:left;background-color:#fdf7e9;border-left:5px solid #f0ad4e;padding:12px 15px;border-radius:5px"><h3 style="margin:0;color:#c08b3a">正在加载公告...</h3></div></div>')
+
+        if HAS_UPDATER:
+            with ui.card().classes('w-full rounded-2xl border border-amber-200 dark:border-amber-800'):
+                with ui.row().classes('items-center justify-between w-full gap-4'):
+                    with ui.column().classes('gap-0'):
+                        ui.label('版本更新').classes('text-base font-bold')
+                        upd_status = ui.label('正在检测更新...').classes('text-sm text-gray-500 dark:text-gray-400')
+                        upd_info = ui.label('').classes('text-xs text-gray-400 break-all')
+                    upd_btn = ui.button('点击更新', icon='download', color='primary').props('unelevated')
+                    upd_btn.set_visibility(False)
+
+                async def check_update():
+                    if not HAS_UPDATER:
+                        upd_status.set_text('更新模块不可用')
+                        return
+                    try:
+                        remote = await asyncio.to_thread(updater.check_update)
+                    except Exception as e:
+                        upd_status.set_text('检测失败')
+                        upd_info.set_text(f'{type(e).__name__}: {e}')
+                        return
+                    if remote is None:
+                        upd_status.set_text('已是最新版本')
+                        upd_info.set_text('本地与 GitHub 代码一致')
+                        upd_btn.set_visibility(False)
+                    else:
+                        upd_status.set_text('🔄 有新版本更新')
+                        msg = (remote.get('message') or '').splitlines()[0][:50]
+                        upd_info.set_text(f"{msg} · {remote.get('time', '')[:10]}")
+                        upd_btn.set_visibility(True)
+
+                async def do_update():
+                    upd_btn.props('loading').set_enabled(False)
+                    try:
+                        ok, msg = await asyncio.to_thread(updater.do_update)
+                    except Exception as e:
+                        ok, msg = False, f'{type(e).__name__}: {e}'
+                    if ok:
+                        upd_status.set_text('更新完成，面板正在重启...')
+                        upd_info.set_text(msg)
+                        ui.notify('更新成功，面板即将自动重启', color='positive', position='top')
+                        updater.restart_nicegui()
+                    else:
+                        upd_status.set_text('更新失败')
+                        upd_info.set_text(msg)
+                        ui.notify(f'更新失败: {msg}', color='negative', position='top')
+                        upd_btn.props(remove='loading').set_enabled(True)
+
+                upd_btn.on_click(do_update)
+                ui.timer(1.0, check_update, once=True)
 
         with ui.card().classes('w-full rounded-2xl bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10'):
             with ui.row().classes('items-center justify-between w-full'):
@@ -217,6 +274,12 @@ async def main_page():
 
     dark = ui.dark_mode()
 
+    if app.storage.user.get('authenticated') and (time.time() - (app.storage.user.get('login_time') or 0)) > 2 * 3600:
+        app.storage.user.clear()
+        app.storage.user.update({'authenticated': False})
+        ui.navigate.to('/')
+        return
+
     if not app.storage.user.get('authenticated'):
         ui.query('body').style(f'''
             background-image: url("{LOGIN_BG_URL}");
@@ -234,7 +297,7 @@ async def main_page():
                 async def attempt_login():
                     is_valid = (username.value == ADMIN_USERNAME and password.value == ADMIN_PASSWORD)
                     if is_valid:
-                        app.storage.user.update({'authenticated': True, 'username': username.value, 'view': 'home'})
+                        app.storage.user.update({'authenticated': True, 'username': username.value, 'view': 'home', 'login_time': time.time()})
                         ui.navigate.to('/')
                     else:
                         ui.notify('账号或密码错误', color='negative', icon='warning')
