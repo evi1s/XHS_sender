@@ -1,63 +1,46 @@
 import httpx
-import json
 from nicegui import app, ui
-from xhshow import Xhshow
+import config
 
-XHS_API_URL = 'https://edith.xiaohongshu.com/api/sns/web/short_url'
-USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36'
-
-xhshow_client = Xhshow()
+SHORT_URL_PATH = '/short-url'
 
 
-def ensure_cookie_with_a1(cookie_str: str) -> str:
-    cookies = {}
-    for part in cookie_str.split(';'):
-        if '=' in part:
-            key, value = part.strip().split('=', 1)
-            cookies[key] = value
-    if 'a1' not in cookies:
-        cookies['a1'] = Xhshow.generate_a1()
-    return '; '.join(f'{k}={v}' for k, v in cookies.items())
+def _server_base() -> str:
+    base = config.PROXY_SERVER_URL
+    for suffix in ('/execute-task', '/execute_task', '/health'):
+        if suffix in base:
+            base = base.split(suffix)[0]
+    return base.rstrip('/')
 
 
 async def generate_short_url_backend(long_url: str, user_cookie: str) -> str:
-    params_as_json_string = json.dumps({'applink': long_url})
-    final_original_url_value = f'xhsdiscover://open_app?params={params_as_json_string}'
-    payload_for_xhs = {'original_url': final_original_url_value}
-
-    try:
-        cookie_with_a1 = ensure_cookie_with_a1(user_cookie)
-        sign_headers = xhshow_client.sign_headers_post(
-            uri=XHS_API_URL,
-            cookies=cookie_with_a1,
-            payload=payload_for_xhs,
-        )
-    except Exception as e:
-        raise Exception(f"第一步 [本地生成签名] 失败: {e}")
-
-    xhs_api_headers = {
-        'Content-Type': 'application/json;charset=UTF-8',
-        'Accept': 'application/json, text/plain, */*',
-        'User-Agent': USER_AGENT,
-        'cookie': cookie_with_a1,
-        **sign_headers,
+    url = _server_base() + SHORT_URL_PATH
+    headers = {
+        'X-API-Key': config.PROXY_API_KEY,
+        'Content-Type': 'application/json',
     }
-
+    payload = {'long_url': long_url, 'user_cookie': user_cookie}
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            xhs_response = await client.post(XHS_API_URL, json=payload_for_xhs, headers=xhs_api_headers)
-            xhs_response.raise_for_status()
-            xhs_response_data = xhs_response.json()
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            resp = await client.post(url, json=payload, headers=headers)
+            resp.raise_for_status()
+            data = resp.json()
     except httpx.HTTPStatusError as e:
-        raise Exception(f"第二步 [生成短链接] 失败 (HTTP {e.response.status_code})。\n响应详情: {e.response.text}")
+        detail = ''
+        try:
+            detail = e.response.json().get('detail', e.response.text)
+        except Exception:
+            detail = e.response.text
+        raise Exception(f"远程生成短链接失败 (HTTP {e.response.status_code}): {detail}")
     except Exception as e:
-        raise Exception(f"第二步 [生成短链接] 时发生网络或解析错误: {e}")
+        raise Exception(f"远程生成短链接时发生网络或连接错误: {e}")
 
-    short_url = xhs_response_data.get('data', {}).get('short_url')
+    if data.get('status') != 'success':
+        raise Exception(f"远程生成短链接失败: {data.get('detail') or data}")
+    short_url = data.get('short_url')
     if not short_url:
-        raise Exception(f"第二步 [生成短链接] 失败: 未能提取 short_url。\n原始响应: {xhs_response_data}")
-
-    return short_url if short_url.startswith('http') else 'https://' + short_url
+        raise Exception("远程返回中未包含 short_url")
+    return short_url
 
 
 def create_ui():
@@ -93,7 +76,7 @@ def create_ui():
 
                 result_card.set_visibility(True)
                 result_card.classes(remove='border-green-500 border-red-500', add='border-blue-500')
-                result_html.content = '<strong>正在请求... (步骤 1/2: 本地生成签名)</strong>'
+                result_html.content = '<strong>正在请求远程服务器生成短链接...</strong>'
 
                 try:
                     final_url = await generate_short_url_backend(long_url, cookie)
