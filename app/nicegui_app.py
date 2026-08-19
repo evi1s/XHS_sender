@@ -39,20 +39,22 @@ MENU_ITEMS = {
 
 
 def _stat_card(title: str, icon: str, color: str) -> dict:
-    
+                                          
     with ui.card().classes('w-60 rounded-2xl shadow-lg bg-white dark:bg-gray-800'):
         with ui.row().classes('items-center gap-4'):
             with ui.element('div').classes(f'w-12 h-12 rounded-xl bg-gradient-to-br {color} flex items-center justify-center shrink-0'):
                 ui.icon(icon).classes('text-white text-2xl')
             with ui.column().classes('gap-0'):
                 ui.label(title).classes('text-sm text-gray-500 dark:text-gray-400')
-                value_label = ui.label('--').classes('text-3xl font-bold')
+                with ui.row().classes('items-baseline gap-1.5'):
+                    value_label = ui.label('--').classes('text-3xl font-bold')
+                    extra_label = ui.label('').classes('text-xs text-gray-400 break-all')
                 sub_label = ui.label('加载中...').classes('text-xs text-gray-400 break-all')
-    return {'value': value_label, 'sub': sub_label}
+    return {'value': value_label, 'sub': sub_label, 'extra': extra_label}
 
 
 async def _refresh_stats(cards: dict):
-    
+                                              
     try:
         proc = getattr(runapp, 'SCRIPT_PROCESS', None)
         running = proc is not None and getattr(proc, 'returncode', None) is None
@@ -129,7 +131,7 @@ async def _refresh_stats(cards: dict):
         else:
             cards['server']['value'].set_text('在线' if online else f'HTTP {status}')
             cards['server']['sub'].set_text(f'状态码:{status} Key有效')
-            cards['server']['value'].classes(remove='text-red-500 text-green-500', add='text-green-500' if online else 'text-red-500')
+            cards['server']['value'].classes(remove='text-green-500 text-red-500', add='text-green-500' if online else 'text-red-500')
     except Exception as e:
         cards['server']['value'].set_text('离线')
         cards['server']['sub'].set_text(f'{type(e).__name__}')
@@ -142,6 +144,8 @@ async def _refresh_stats(cards: dict):
             r = await c.get(base + '/customer/status', headers={'X-API-Key': api_key})
             info = r.json()
         if info.get('valid'):
+            _cid = info.get('customer_id') or ''
+            cards['key']['extra'].set_text(f'ID:{_cid}' if _cid else '')
             remaining = info.get('remaining')
             days = info.get('remaining_days')
             expire = (info.get('expire_at') or '')[:10]
@@ -157,16 +161,18 @@ async def _refresh_stats(cards: dict):
             cards['key']['value'].classes(remove='text-red-500 text-green-500', add='text-green-500')
         else:
             cards['key']['value'].set_text('失效')
+            cards['key']['extra'].set_text('')
             cards['key']['sub'].set_text(info.get('reason') or 'Key 无效')
             cards['key']['value'].classes(remove='text-green-500 text-red-500', add='text-red-500')
     except Exception as e:
         cards['key']['value'].set_text('未配置')
+        cards['key']['extra'].set_text('')
         cards['key']['sub'].set_text(f'{type(e).__name__}')
         cards['key']['value'].classes(remove='text-green-500 text-red-500', add='text-red-500')
 
 
 def render_home():
-    
+                             
     with ui.column().classes('w-full max-w-5xl gap-6'):
         with ui.card().classes('w-full rounded-2xl'):
             readme_display = ui.html('<div style="text-align:right;width:100%"><div style="display:inline-block;text-align:left;background-color:#fdf7e9;border-left:5px solid #f0ad4e;padding:12px 15px;border-radius:5px"><h3 style="margin:0;color:#c08b3a">正在加载公告...</h3></div></div>')
