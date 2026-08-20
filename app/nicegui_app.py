@@ -179,11 +179,11 @@ async def _refresh_stats(cards: dict):
         if status == 401:
             cards['server']['value'].set_text('在线')
             cards['server']['sub'].set_text(f'状态码:{status} Key无效')
-            cards['server']['value'].classes(remove='text-green-500 text-red-500', add='text-red-500')
+            cards['server']['value'].classes(remove='text-red-500 text-green-500', add='text-red-500')
         else:
             cards['server']['value'].set_text('在线' if online else f'HTTP {status}')
             cards['server']['sub'].set_text(f'状态码:{status} Key有效')
-            cards['server']['value'].classes(remove='text-green-500 text-red-500', add='text-green-500' if online else 'text-red-500')
+            cards['server']['value'].classes(remove='text-red-500 text-green-500', add='text-green-500' if online else 'text-red-500')
     except Exception as e:
         cards['server']['value'].set_text('离线')
         cards['server']['sub'].set_text(f'{type(e).__name__}')
