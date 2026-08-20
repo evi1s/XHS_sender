@@ -1,11 +1,16 @@
                        
 
    
+
+
+
+   
 import httpx
 from nicegui import app, ui
 import config
 
 SHORT_URL_PATH = '/short-url'
+STATUS_PATH = '/customer/status'
 
 
 def _server_base() -> str:
@@ -17,14 +22,14 @@ def _server_base() -> str:
     return base.rstrip('/')
 
 
-async def generate_short_url_backend(long_url: str, user_cookie: str) -> str:
+async def generate_short_url_backend(long_url: str) -> str:
                                         
     url = _server_base() + SHORT_URL_PATH
     headers = {
         'X-API-Key': config.PROXY_API_KEY,
         'Content-Type': 'application/json',
     }
-    payload = {'long_url': long_url, 'user_cookie': user_cookie}
+    payload = {'long_url': long_url}
     try:
         async with httpx.AsyncClient(timeout=60.0) as client:
             resp = await client.post(url, json=payload, headers=headers)
@@ -50,20 +55,33 @@ async def generate_short_url_backend(long_url: str, user_cookie: str) -> str:
     return short_url
 
 
-def create_ui():
-    COOKIE_STORAGE_KEY = 'xhs_shortlink_user_cookie'
+async def _fetch_shorturl_remaining():
+                                                                  
+    url = _server_base() + STATUS_PATH
+    headers = {'X-API-Key': config.PROXY_API_KEY}
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(url, headers=headers)
+            resp.raise_for_status()
+            data = resp.json()
+        if not data.get('valid'):
+            return None, False
+        return data.get('shorturl_remaining'), bool(data.get('shorturl_enabled'))
+    except Exception:
+        return None, False
 
+
+def create_ui():
     with ui.card().classes('w-full max-w-5xl mx-auto rounded-2xl shadow-lg'):
         with ui.row().classes('w-full items-center bg-gradient-to-r from-rose-500 to-red-500 rounded-t-2xl px-4 py-3'):
             ui.icon('link', size='28px').classes('text-white')
-            ui.label('小红书短链接生成器').classes('text-xl font-bold text-white')
+            ui.label('小红书短链接生成器 Ver2.0').classes('text-xl font-bold text-white')
+            remaining_label = ui.label('剩余次数: --').classes('text-sm font-bold text-white opacity-90 ml-4')
 
         with ui.column().classes('w-full gap-4 px-4 py-4'):
             url_input = ui.input(label='长链接', placeholder='例如: https://www.qq.com').props('outlined').classes('w-full')
 
-            cookie_input = ui.textarea(label='填入电脑端Cookie (自动临时保存)') \
-                .props('outlined').classes('w-full h-32') \
-                .bind_value(app.storage.client, COOKIE_STORAGE_KEY)
+            ui.label('短链由服务端统一配置生成，无需填写 Cookie').classes('text-xs text-gray-400')
 
             with ui.card().classes('w-full border-2') as result_card:
                 result_html = ui.html().classes('w-full p-2')
@@ -72,10 +90,9 @@ def create_ui():
 
             async def handle_generate():
                 long_url = url_input.value
-                cookie = cookie_input.value
 
-                if not all([long_url, cookie]):
-                    ui.notify('长链接和Cookie均不能为空！', color='negative')
+                if not long_url:
+                    ui.notify('长链接不能为空！', color='negative')
                     return
 
                 submit_btn.disable()
@@ -86,7 +103,8 @@ def create_ui():
                 result_html.content = '<strong>正在请求远程服务器生成短链接...</strong>'
 
                 try:
-                    final_url = await generate_short_url_backend(long_url, cookie)
+                    final_url = await generate_short_url_backend(long_url)
+                    await refresh_remaining()
                     result_card.classes(remove='border-blue-500 border-red-500', add='border-green-500')
                     result_html.content = f'''
                         <strong>生成成功！短链接:</strong><br>
@@ -102,3 +120,16 @@ def create_ui():
                     submit_btn.text = '生成短链接'
 
             submit_btn = ui.button('生成短链接', on_click=handle_generate, icon='auto_awesome', color='red').classes('w-full')
+
+            async def refresh_remaining():
+                remaining, enabled = await _fetch_shorturl_remaining()
+                if remaining is None:
+                    remaining_label.text = '剩余次数: 获取失败'
+                elif not enabled:
+                    remaining_label.text = '剩余次数: 未激活'
+                elif remaining == -1:
+                    remaining_label.text = '剩余次数: 不限'
+                else:
+                    remaining_label.text = f'剩余次数: {remaining}'
+
+            ui.timer(0.3, refresh_remaining, once=True)
