@@ -1,4 +1,4 @@
-
+           
 
 import asyncio
 import sys
@@ -20,7 +20,7 @@ GLOBAL_LOG_CONTENT: List[str] = [
 
 
 def clean_ansi(text: str) -> str:
-    """移除ANSI转义字符"""
+                    
     ansi_pattern = re.compile(r'\x1b\[[0-9;]*m')
     return ansi_pattern.sub('', text)
 
@@ -59,7 +59,7 @@ async def cleanup_on_shutdown():
 
 
 async def run_script():
-    """启动子进程并监控其输出"""
+                     
     global SCRIPT_PROCESS, GLOBAL_LOG_CONTENT
     if SCRIPT_PROCESS is not None and SCRIPT_PROCESS.returncode is None:
         ui.notify('任务已在运行中...', color='warning')
@@ -121,23 +121,33 @@ async def kill_running_script():
 
 
 def create_runner_ui():
-    with ui.card().classes('w-full max-w-[98%] mx-auto rounded-2xl shadow-lg'):
+    with ui.card().classes('w-full max-w-[78%] mx-auto rounded-2xl shadow-lg'):
         with ui.row().classes('w-full items-center bg-gradient-to-r from-emerald-600 to-teal-600 rounded-t-2xl px-4 py-3'):
             ui.icon('terminal', size='28px').classes('text-white')
             ui.label('任务执行').classes('text-xl font-bold text-white')
+            collapse_btn = ui.button(icon='expand_less', on_click=lambda: toggle_collapse()).props('flat round text-color=white size=sm').tooltip('展开/收起')
             ui.space()
             ui.label('日志实时输出').classes('text-white/80 text-sm mr-4')
 
-        with ui.column().classes('w-full gap-4 px-4 py-4'):
+        collapsed = False
+
+        def toggle_collapse():
+            nonlocal collapsed
+            collapsed = not collapsed
+            content_box.set_visibility(not collapsed)
+            collapse_btn.props('icon=' + ('expand_more' if collapsed else 'expand_less'))
+
+        content_box = ui.column().classes('w-full gap-4 px-4 py-4')
+        with content_box:
             last_line_sent = 0
 
-            terminal_options = {'rows': 50, 'cols': 400, 'wordWrap': False, 'scrollback': 10000}
+            terminal_options = {'rows': 32, 'cols': 240, 'wordWrap': False, 'scrollback': 10000}
             terminal = ui.xterm(terminal_options).classes('w-full rounded-xl border border-gray-300 dark:border-gray-700')
-            terminal.props('style=min-height:65vh;height:65vh')
+            terminal.props('style=min-height:42vh;height:42vh')
 
-            with ui.row().classes('w-full justify-center gap-4 mt-2'):
-                run_button = ui.button('执行程序', on_click=run_script, icon='play_circle', color='positive')
-                stop_button = ui.button('结束任务', on_click=kill_running_script, icon='stop_circle', color='negative')
+        with ui.row().classes('w-full justify-center gap-4 px-4 pb-4'):
+            run_button = ui.button('执行程序', on_click=run_script, icon='play_circle', color='positive')
+            stop_button = ui.button('结束任务', on_click=kill_running_script, icon='stop_circle', color='negative')
 
             def sync_ui_state():
                 nonlocal last_line_sent

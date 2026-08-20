@@ -1,4 +1,5 @@
 import asyncio
+import hashlib
 import httpx
 import time
 import psutil
@@ -79,14 +80,15 @@ MENU_ITEMS = {
     'home': {'name': '主页', 'icon': 'home'},
     'button1': {'name': '执行程序', 'icon': 'play_circle_outline'},
     'button2': {'name': '软件设置', 'icon': 'build_circle'},
-    'button5': {'name': '设备管理', 'icon': 'devices_other'},
-    'button9': {'name': '设备列表', 'icon': 'view_list'},
+    'button5': {'name': '添加账号', 'icon': 'devices_other'},
+    'button9': {'name': '账号列表', 'icon': 'view_list'},
     'button6': {'name': '客户管理', 'icon': 'group_add'},
     'button7': {'name': '文字消息', 'icon': 'rate_review'},
     'button4': {'name': '卡片消息', 'icon': 'style'},
     'button10': {'name': '卡片消息2', 'icon': 'style'},
     'button8': {'name': '短链生成', 'icon': 'link'},
     'authorize': {'name': '授权设置', 'icon': 'vpn_key'},
+    'button11': {'name': '管理设置', 'icon': 'admin_panel_settings'},
 }
 
 
@@ -179,7 +181,7 @@ async def _refresh_stats(cards: dict):
         if status == 401:
             cards['server']['value'].set_text('在线')
             cards['server']['sub'].set_text(f'状态码:{status} Key无效')
-            cards['server']['value'].classes(remove='text-red-500 text-green-500', add='text-red-500')
+            cards['server']['value'].classes(remove='text-green-500 text-red-500', add='text-red-500')
         else:
             cards['server']['value'].set_text('在线' if online else f'HTTP {status}')
             cards['server']['sub'].set_text(f'状态码:{status} Key有效')
@@ -226,8 +228,12 @@ async def _refresh_stats(cards: dict):
 def render_home():
                              
     with ui.column().classes('w-full max-w-5xl gap-6'):
-        with ui.card().classes('w-full rounded-2xl'):
-            readme_display = ui.html('<div style="text-align:right;width:100%"><div style="display:inline-block;text-align:left;background-color:#fdf7e9;border-left:5px solid #f0ad4e;padding:12px 15px;border-radius:5px"><h3 style="margin:0;color:#c08b3a">正在加载公告...</h3></div></div>')
+        notice_card = ui.card().classes('fixed bottom-4 right-4 z-50 w-96 max-w-[92vw] shadow-2xl rounded-2xl')
+        with notice_card:
+            with ui.row().classes('items-center justify-between w-full gap-2'):
+                ui.label('📢 系统公告').classes('text-base font-bold text-amber-600')
+                ui.button(icon='close', on_click=lambda: notice_card.set_visibility(False)).props('flat dense round')
+            readme_display = ui.html('<div style="width:100%;box-sizing:border-box;background-color:#fdf7e9;border-left:5px solid #f0ad4e;padding:12px 15px;border-radius:5px"><h3 style="margin:0;color:#c08b3a">正在加载公告...</h3></div>')
 
         if HAS_UPDATER:
             with ui.card().classes('w-full rounded-2xl border border-amber-200 dark:border-amber-800'):
@@ -340,9 +346,9 @@ async def main_page():
                 password = ui.input('密码', password=True, password_toggle_button=True).props('outlined dense').classes('w-full')
 
                 async def attempt_login():
-                    is_valid = (username.value == ADMIN_USERNAME and password.value == ADMIN_PASSWORD)
-                    if is_valid:
-                        app.storage.user.update({'authenticated': True, 'username': username.value, 'view': 'home', 'login_time': time.time()})
+                    ok, role, uname = verify_user(username.value, password.value)
+                    if ok:
+                        app.storage.user.update({'authenticated': True, 'username': uname, 'role': role, 'view': 'home', 'login_time': time.time()})
                         ui.navigate.to('/')
                     else:
                         ui.notify('账号或密码错误', color='negative', icon='warning')
@@ -380,7 +386,7 @@ async def main_page():
             else:
                 item.classes(remove=active_class)
 
-        centered_views = ['home', 'button1', 'button2', 'button3', 'button4', 'button5', 'button6', 'button7', 'button8', 'button9', 'button10', 'authorize']
+        centered_views = ['home', 'button1', 'button2', 'button3', 'button4', 'button5', 'button6', 'button7', 'button8', 'button9', 'button10', 'authorize', 'button11']
 
         if view_name in centered_views:
             content_container.classes(add='items-center')
@@ -413,6 +419,8 @@ async def main_page():
                 create_device_list_ui()
             elif view_name == 'authorize':
                 create_authorize_ui()
+            elif view_name == 'button11':
+                create_user_manage_ui()
             else:
                 readme_display = ui.html("<h3>正在加载主页内容...</h3>")
 
@@ -436,8 +444,12 @@ async def main_page():
             ui.icon('menu', size='md')
             ui.label('导航菜单').classes('text-lg font-semibold')
 
+        _current_user = app.storage.user.get('username', '')
+        _current_role = app.storage.user.get('role', '') or ('admin' if _current_user == ADMIN_USERNAME else 'user')
         for name, details in MENU_ITEMS.items():
             if name == 'button10':
+                continue
+            if name == 'button11' and _current_role != 'admin':
                 continue
             with ui.item(on_click=lambda n=name: change_view(n)) \
                     .classes('w-full rounded-lg cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700') as item:
@@ -455,6 +467,128 @@ async def main_page():
                 .tooltip('切换亮色/暗色主题')
 
     change_view('home')
+
+
+def _hash_password(username: str, password: str) -> str:
+                 
+    return hashlib.sha256(f'{username}:{password}'.encode('utf-8')).hexdigest()
+
+
+def verify_user(username: str, password: str):
+    
+                               
+    users = get_collection('users')
+    u = users.find_one({'username': username})
+    if u:
+        if u.get('password') == _hash_password(username, password):
+            return True, u.get('role', 'user'), username
+        return False, None, None
+    if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+        if not users.find_one({'username': ADMIN_USERNAME}):
+            users.insert_one({
+                'username': ADMIN_USERNAME,
+                'password': _hash_password(ADMIN_USERNAME, ADMIN_PASSWORD),
+                'role': 'admin',
+                'created_at': datetime.now(),
+            })
+        return True, 'admin', username
+    return False, None, None
+
+
+def create_user_manage_ui():
+                                       
+    current_user = app.storage.user.get('username', '')
+
+    def _load_users():
+        users = get_collection('users')
+        rows = []
+        for u in users.find({}).sort('created_at', 1):
+            rows.append({
+                'username': u.get('username', ''),
+                'role': u.get('role', 'user'),
+                'created_at': u.get('created_at', '').strftime('%Y-%m-%d %H:%M') if hasattr(u.get('created_at', ''), 'strftime') else str(u.get('created_at', ''))[:19],
+            })
+        return rows
+
+    def _delete_user(uname):
+        if not uname:
+            return
+        if uname == current_user:
+            ui.notify('不能删除当前登录用户', color='negative')
+            return
+        if uname == ADMIN_USERNAME:
+            ui.notify('不能删除超级管理员', color='negative')
+            return
+        users = get_collection('users')
+        admins = users.count_documents({'role': 'admin'})
+        target = users.find_one({'username': uname})
+        if target and target.get('role') == 'admin' and admins <= 1:
+            ui.notify('至少保留一个管理员', color='negative')
+            return
+        users.delete_one({'username': uname})
+        ui.notify(f'用户 {uname} 已删除', color='positive')
+        render_table()
+
+    with ui.column().classes('w-full max-w-3xl gap-4'):
+        with ui.card().classes('w-full rounded-2xl'):
+            ui.label('➕ 添加用户').classes('text-lg font-bold mb-2')
+            with ui.row().classes('w-full items-center gap-3'):
+                new_username = ui.input('用户名').props('outlined dense').classes('flex-1')
+                new_password = ui.input('密码', password=True, password_toggle_button=True).props('outlined dense').classes('flex-1')
+                new_role = ui.select({'admin': '管理员', 'user': '普通用户'}, value='user', label='角色').props('outlined dense').classes('w-36')
+
+                async def add_user():
+                    uname = new_username.value.strip()
+                    pwd = new_password.value
+                    if not uname or not pwd:
+                        ui.notify('用户名和密码不能为空', color='negative')
+                        return
+                    users = get_collection('users')
+                    if users.find_one({'username': uname}):
+                        ui.notify(f'用户 {uname} 已存在', color='negative')
+                        return
+                    users.insert_one({
+                        'username': uname,
+                        'password': _hash_password(uname, pwd),
+                        'role': new_role.value,
+                        'created_at': datetime.now(),
+                    })
+                    ui.notify(f'用户 {uname} 添加成功', color='positive')
+                    new_username.value = ''
+                    new_password.value = ''
+                    render_table()
+
+                ui.button('添加', icon='person_add', on_click=add_user).props('unelevated color=primary')
+
+        with ui.card().classes('w-full rounded-2xl'):
+            ui.label('👥 用户列表').classes('text-lg font-bold mb-2')
+            table_wrapper = ui.column().classes('w-full gap-2')
+
+            def render_table():
+                table_wrapper.clear()
+                with table_wrapper:
+                    rows = _load_users()
+                        
+                    with ui.row().classes('w-full items-center px-2 py-1 bg-gray-200 rounded font-bold text-sm'):
+                        ui.label('用户名').classes('w-1/4')
+                        ui.label('角色').classes('w-1/4')
+                        ui.label('创建时间').classes('w-1/3')
+                        ui.label('操作').classes('w-1/6')
+                         
+                    for r in rows:
+                        with ui.row().classes('w-full items-center px-2 py-1 border-b border-gray-200 text-sm'):
+                            ui.label(r['username']).classes('w-1/4')
+                            ui.label('管理员' if r['role'] == 'admin' else '普通用户').classes('w-1/4')
+                            ui.label(r['created_at']).classes('w-1/3 text-gray-600')
+                            if r['username'] == current_user or r['username'] == ADMIN_USERNAME:
+                                ui.label('不可删除').classes('w-1/6 text-gray-400 text-xs')
+                            else:
+                                ui.button(icon='delete', on_click=lambda u=r['username']: _delete_user(u)).props('flat round dense color=negative').classes('w-1/6')
+                    if not rows:
+                        ui.label('暂无用户').classes('text-gray-400 text-center w-full py-4')
+                    ui.button('刷新列表', icon='refresh', on_click=render_table).props('flat dense')
+
+            render_table()
 
 
 app.add_static_files('/img', '/root/nicegui/img')

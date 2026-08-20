@@ -6,6 +6,15 @@ from nicegui import ui, elements
 CONFIG_FILE_PATH = 'config.py'
 
 
+def mask_user_id(uid: str) -> str:
+                               
+    if not uid:
+        return ''
+    if len(uid) <= 4:
+        return '*' * len(uid)
+    return uid[:-4] + '****'
+
+
 def _section_title(text: str, icon: str = 'settings'):
                   
     with ui.row().classes('w-full items-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg px-3 py-2'):
@@ -15,6 +24,7 @@ def _section_title(text: str, icon: str = 'settings'):
 
 def create_settings_ui():
     inputs: Dict[str, elements.ValueElement] = {}
+    full_user_id = {'value': ''}                             
 
     async def load_config():
         def sync_load():
@@ -35,10 +45,21 @@ def create_settings_ui():
         for key, element in inputs.items():
             if key in config_data:
                 element.set_value(config_data[key])
+
+                                         
+        if 'CHECK_USER_ID' in config_data and config_data['CHECK_USER_ID']:
+            full_user_id['value'] = config_data['CHECK_USER_ID']
+            inputs['CHECK_USER_ID'].set_value(mask_user_id(config_data['CHECK_USER_ID']))
+
         ui.notify('配置已加载', color='positive')
 
     async def save_config():
         config_values = {key: element.value for key, element in inputs.items()}
+
+                                              
+        uid_val = inputs['CHECK_USER_ID'].value
+        if full_user_id['value'] and uid_val in (mask_user_id(full_user_id['value']), full_user_id['value']):
+            config_values['CHECK_USER_ID'] = full_user_id['value']
 
         def sync_save():
             try:
@@ -126,9 +147,18 @@ def create_settings_ui():
                     ui.icon('favorite', size='sm').classes('text-rose-500')
                     ui.label('健康检查设置').classes('text-lg font-semibold text-rose-600 dark:text-rose-300')
                 with ui.row().classes('w-full items-center gap-4 mt-2'):
-                    create_text_input('CHECK_USER_ID', '收发信主账号UserId(此号不参与群发)',
-                                      '用于检测小红书账发信账账号健康状态。此UuerID务必需要正常可收发信账号。',
-                                      props='style="width: 250px"')
+                    ui.icon('help_outline', color='grey', size='sm').tooltip('用于检测小红书账发信账账号健康状态。此UuerID务必需要正常可收发信账号。')
+                    check_uid_input = ui.input('收发信主账号UserId(此号不参与群发)').props('style="width: 250px"')
+                    inputs['CHECK_USER_ID'] = check_uid_input
+
+                    def toggle_check_uid():
+                                                 
+                        if check_uid_input.value == full_user_id['value'] and full_user_id['value']:
+                            check_uid_input.set_value(mask_user_id(full_user_id['value']))
+                        else:
+                            check_uid_input.set_value(full_user_id['value'])
+
+                    ui.button(icon='visibility', on_click=toggle_check_uid, color='transparent').props('flat round dense').classes('-ml-1').tooltip('点击查看完整UserId')
 
             with ui.grid(columns=2).classes('w-full gap-4'):
                 with ui.card().classes('w-full'):
