@@ -27,6 +27,51 @@ except Exception:
     HAS_UPDATER = False
 
 README_URL = "https://commteam.it.com/web/readme.txt"
+
+
+
+
+def md2html(text):
+                                                              
+    import re as _re
+    _t = text or ''
+    if _re.search(r'<[a-zA-Z][a-zA-Z0-9]*[^>]*>', _t):
+                                     
+        return '<div style="width:100%%;box-sizing:border-box">%s</div>' % _t
+    lines = _t.splitlines()
+    out = []
+    for ln in lines:
+        st = ln.strip()
+        if not st:
+            continue
+        if st.startswith('### '):
+            out.append('<div style="margin:10px 0 4px;font-size:14px;font-weight:700;color:#d4380d">%s</div>' % _md_line(st[4:]))
+        elif st.startswith('## '):
+            out.append('<div style="margin:12px 0 4px;font-size:16px;font-weight:700;color:#d4380d">%s</div>' % _md_line(st[3:]))
+        elif st.startswith('# '):
+            out.append('<div style="margin:12px 0 4px;font-size:18px;font-weight:700;color:#d4380d">%s</div>' % _md_line(st[2:]))
+        elif st.startswith('> '):
+            out.append('<blockquote style="margin:6px 0;padding:8px 12px;background:#fff3e0;border-left:4px solid #f0ad4e;border-radius:4px;color:#ad4e00">%s</blockquote>' % _md_line(st[2:]))
+        elif st == '---':
+            out.append('<hr style="border:none;border-top:1px dashed #d9b38c;margin:10px 0">')
+        elif st.startswith('- ') or st.startswith('* ') or st.startswith('+ '):
+            out.append('<div style="padding:2px 0">• %s</div>' % _md_line(st[2:]))
+        else:
+            out.append('<div style="padding:3px 0">%s</div>' % _md_line(st))
+    body = '\n'.join(out)
+    return ('<div style="width:100%%;box-sizing:border-box;font-family:-apple-system,\'Microsoft YaHei\',sans-serif;'
+            'font-size:13px;line-height:1.8;color:#4a4a4a">%s</div>') % body
+
+
+def _md_line(t):
+                                                 
+    import html as _html
+    import re as _re
+    t = _html.escape(t)
+    return _re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', t)
+
+
+
 LOGIN_BG_URL = "/img/login_bg.webp"
 CONTACT_US_URL = ""
 
@@ -46,7 +91,7 @@ MENU_ITEMS = {
 
 
 def _stat_card(title: str, icon: str, color: str) -> dict:
-    
+                                          
     with ui.card().classes('w-60 rounded-2xl shadow-lg bg-white dark:bg-gray-800'):
         with ui.row().classes('items-center gap-4'):
             with ui.element('div').classes(f'w-12 h-12 rounded-xl bg-gradient-to-br {color} flex items-center justify-center shrink-0'):
@@ -61,7 +106,7 @@ def _stat_card(title: str, icon: str, color: str) -> dict:
 
 
 async def _refresh_stats(cards: dict):
-    
+                                              
     try:
         proc = getattr(runapp, 'SCRIPT_PROCESS', None)
         running = proc is not None and getattr(proc, 'returncode', None) is None
@@ -179,7 +224,7 @@ async def _refresh_stats(cards: dict):
 
 
 def render_home():
-    
+                             
     with ui.column().classes('w-full max-w-5xl gap-6'):
         with ui.card().classes('w-full rounded-2xl'):
             readme_display = ui.html('<div style="text-align:right;width:100%"><div style="display:inline-block;text-align:left;background-color:#fdf7e9;border-left:5px solid #f0ad4e;padding:12px 15px;border-radius:5px"><h3 style="margin:0;color:#c08b3a">正在加载公告...</h3></div></div>')
@@ -259,9 +304,9 @@ def render_home():
                 async with httpx.AsyncClient(timeout=10.0) as c:
                     r = await c.get(README_URL)
                     r.raise_for_status()
-                    readme_display.set_content(f'<div style="text-align:right;width:100%"><div style="display:inline-block;text-align:left">{r.text}</div></div>')
+                    readme_display.set_content(md2html(r.text))
             except Exception as e:
-                readme_display.set_content(f"<div style='text-align:right;width:100%'><div style='display:inline-block;text-align:left;background-color:#fdf7e9;border-left:5px solid #f0ad4e;padding:12px 15px;border-radius:5px'><h3 style='margin:0'>加载公告失败</h3><p style='margin:4px 0 0'><code>{type(e).__name__}: {e}</code></p></div></div>")
+                readme_display.set_content(f"<div style='width:100%;box-sizing:border-box;background-color:#fdf7e9;border-left:5px solid #f0ad4e;padding:12px 15px;border-radius:5px'><h3 style='margin:0'>加载公告失败</h3><p style='margin:4px 0 0'><code>{type(e).__name__}: {e}</code></p></div>")
 
         ui.timer(0.3, lambda: _refresh_stats(cards), once=True)
         ui.timer(30, lambda: _refresh_stats(cards))
@@ -376,7 +421,7 @@ async def main_page():
                         async with httpx.AsyncClient(timeout=10.0) as c:
                             r = await c.get(README_URL)
                             r.raise_for_status()
-                            readme_display.set_content(r.text)
+                            readme_display.set_content(md2html(r.text))
                     except Exception as e:
                         readme_display.set_content(
                             f"<h3>加载主页内容失败</h3>"
