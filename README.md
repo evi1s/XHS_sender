@@ -206,7 +206,7 @@ api/im/v3/chats/info?chat_user_ids=，/api/sns/v1/user/login/acct_group/list）
 
 ### 抓包方法
 
-![GitHub图像](https://github.com/evi1s/XHS_sender/blob/main/xhs%E6%8A%93%E5%8C%85.png)
+<img width="1367" height="1025" alt="xhs抓包" src="https://github.com/user-attachments/assets/c4570afb-c1ed-441f-b393-8eb32e5bbf51" />
 
 ------
 
