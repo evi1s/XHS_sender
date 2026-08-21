@@ -155,6 +155,11 @@ docker compose ps
 
 ## 🖥️ 控制面板使用说明
 
+
+https://github.com/user-attachments/assets/a7e56635-a08c-4f4b-99a2-65cd398eadc4
+
+
+
 ### 登录
 访问 `http://<IP>:8080`，使用 `.env` 中 `ADMIN_USERNAME` / `ADMIN_PASSWORD` 登录。
 ![GitHub图像](https://github.com/evi1s/XHS_sender/blob/main/%E7%95%8C%E9%9D%A2.jpg)
