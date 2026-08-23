@@ -10,5 +10,3 @@ psutil>=5.9
 
 # MCP Server（让 Chatbox 等客户端通过 MCP 协议调用）
 fastmcp>=2.8
-# 短链签名库（xhshow：本地生成小红书短链签名）
-xhshow>=0.2
