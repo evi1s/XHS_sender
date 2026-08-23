@@ -1,3 +1,4 @@
+import os
 import asyncio
 import hashlib
 import httpx
@@ -185,7 +186,7 @@ async def _refresh_stats(cards: dict, welcome_id_label=None):
         else:
             cards['server']['value'].set_text('在线' if online else f'HTTP {status}')
             cards['server']['sub'].set_text(f'状态码:{status} Key有效')
-            cards['server']['value'].classes(remove='text-green-500 text-red-500', add='text-green-500' if online else 'text-red-500')
+            cards['server']['value'].classes(remove='text-red-500 text-green-500', add='text-green-500' if online else 'text-red-500')
     except Exception as e:
         cards['server']['value'].set_text('离线')
         cards['server']['sub'].set_text(f'{type(e).__name__}')
@@ -598,7 +599,9 @@ def create_user_manage_ui():
             render_table()
 
 
-app.add_static_files('/img', '/root/nicegui/img')
+_IMG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'img')
+if os.path.isdir(_IMG_DIR):
+    app.add_static_files('/img', _IMG_DIR)
 app.on_startup(connect_to_mongo)
 app.on_shutdown(close_mongo_connection)
 
