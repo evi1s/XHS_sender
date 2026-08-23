@@ -8,7 +8,7 @@ from datetime import datetime
 from nicegui import app, ui
 from database import connect_to_mongo, close_mongo_connection
 from runapp import create_runner_ui
-from config import ADMIN_USERNAME, ADMIN_PASSWORD, PROXY_SERVER_URL, MONGO_USER_ID_COLLECTION, PROXY_API_KEY
+from config import ADMIN_USERNAME, ADMIN_PASSWORD, MONGO_USER_ID_COLLECTION
 from settings import create_settings_ui
 from setcard import create_card_editor_ui
 from setcard2 import create_card_editor_ui2
@@ -107,7 +107,7 @@ def _stat_card(title: str, icon: str, color: str) -> dict:
     return {'value': value_label, 'sub': sub_label, 'extra': extra_label}
 
 
-async def _refresh_stats(cards: dict):
+async def _refresh_stats(cards: dict, welcome_id_label=None):
                                               
     try:
         proc = getattr(runapp, 'SCRIPT_PROCESS', None)
@@ -175,7 +175,7 @@ async def _refresh_stats(cards: dict):
         api_key = (getattr(config, 'PROXY_API_KEY', '') or '').strip()
         headers = {'X-API-Key': api_key} if api_key else {}
         async with httpx.AsyncClient(timeout=5) as c:
-            r = await c.post(PROXY_SERVER_URL, json={}, headers=headers)
+            r = await c.post((getattr(config, 'PROXY_SERVER_URL', '') or ''), json={}, headers=headers)
         status = r.status_code
         online = status in (200, 400, 401, 422)
         if status == 401:
@@ -185,7 +185,7 @@ async def _refresh_stats(cards: dict):
         else:
             cards['server']['value'].set_text('在线' if online else f'HTTP {status}')
             cards['server']['sub'].set_text(f'状态码:{status} Key有效')
-            cards['server']['value'].classes(remove='text-red-500 text-green-500', add='text-green-500' if online else 'text-red-500')
+            cards['server']['value'].classes(remove='text-green-500 text-red-500', add='text-green-500' if online else 'text-red-500')
     except Exception as e:
         cards['server']['value'].set_text('离线')
         cards['server']['sub'].set_text(f'{type(e).__name__}')
@@ -193,13 +193,15 @@ async def _refresh_stats(cards: dict):
 
     try:
         api_key = (getattr(config, 'PROXY_API_KEY', '') or '').strip()
-        base = PROXY_SERVER_URL.split('/execute-task')[0]
+        base = (getattr(config, 'PROXY_SERVER_URL', '') or '').split('/execute-task')[0]
         async with httpx.AsyncClient(timeout=6) as c:
             r = await c.get(base + '/customer/status', headers={'X-API-Key': api_key})
             info = r.json()
         if info.get('valid'):
             _cid = info.get('customer_id') or ''
-            cards['key']['extra'].set_text(f'ID:{_cid}' if _cid else '')
+            if welcome_id_label is not None:
+                welcome_id_label.set_text(f'ID:{_cid}' if _cid else '')
+            cards['key']['extra'].set_text('')
             remaining = info.get('remaining')
             days = info.get('remaining_days')
             expire = (info.get('expire_at') or '')[:10]
@@ -216,16 +218,20 @@ async def _refresh_stats(cards: dict):
         else:
             cards['key']['value'].set_text('失效')
             cards['key']['extra'].set_text('')
+            if welcome_id_label is not None:
+                welcome_id_label.set_text('')
             cards['key']['sub'].set_text(info.get('reason') or 'Key 无效')
             cards['key']['value'].classes(remove='text-green-500 text-red-500', add='text-red-500')
     except Exception as e:
         cards['key']['value'].set_text('未配置')
         cards['key']['extra'].set_text('')
+        if welcome_id_label is not None:
+            welcome_id_label.set_text('')
         cards['key']['sub'].set_text(f'{type(e).__name__}')
         cards['key']['value'].classes(remove='text-green-500 text-red-500', add='text-red-500')
 
 
-def render_home():
+def render_home(welcome_id_label=None):
                              
     with ui.column().classes('w-full max-w-5xl gap-6'):
         notice_card = ui.card().classes('fixed bottom-4 right-4 z-50 w-96 max-w-[92vw] shadow-2xl rounded-2xl')
@@ -314,8 +320,8 @@ def render_home():
             except Exception as e:
                 readme_display.set_content(f"<div style='width:100%;box-sizing:border-box;background-color:#fdf7e9;border-left:5px solid #f0ad4e;padding:12px 15px;border-radius:5px'><h3 style='margin:0'>加载公告失败</h3><p style='margin:4px 0 0'><code>{type(e).__name__}: {e}</code></p></div>")
 
-        ui.timer(0.3, lambda: _refresh_stats(cards), once=True)
-        ui.timer(30, lambda: _refresh_stats(cards))
+        ui.timer(0.3, lambda: _refresh_stats(cards, welcome_id_label), once=True)
+        ui.timer(30, lambda: _refresh_stats(cards, welcome_id_label))
         ui.timer(0.5, load_readme, once=True)
 
 
@@ -367,6 +373,7 @@ async def main_page():
             ui.image('/img/header_logo.png').style('height: 40px; width: 40px;')
             ui.label('小红书私信控制面板(Beta_3.3)').classes('text-2xl font-bold')
         with ui.row().classes('items-center gap-4'):
+            welcome_id_label = ui.label('').classes('text-sm text-gray-200 mr-1')
             ui.label(f'欢迎, {app.storage.user.get("username")}!').classes('text-lg')
             def logout():
                 app.storage.user.clear()
@@ -398,7 +405,7 @@ async def main_page():
             ui.label(MENU_ITEMS[view_name]['name']).classes('text-3xl font-bold mb-4')
             ui.separator().classes('mb-8')
             if view_name == 'home':
-                render_home()
+                render_home(welcome_id_label)
             elif view_name == 'button1':
                 create_runner_ui()
             elif view_name == 'button2':
