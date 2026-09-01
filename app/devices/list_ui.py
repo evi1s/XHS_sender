@@ -9,7 +9,7 @@ from . import db_logic
 
 def create_device_list_ui():
     state = {'page': 1, 'page_size': 20, 'items': []}
-    cooldown_refs = []                                        
+    cooldown_refs = []
 
     def format_value(value):
         return '-' if value in (None, '') else str(value)
@@ -18,7 +18,7 @@ def create_device_list_ui():
         if value in (None, ''):
             return '-'
         s = str(value)
-                                                           
+
         if len(s) >= 10 and s[4] == '-' and s[7] == '-':
             return s[2:]
         return s
@@ -72,7 +72,7 @@ def create_device_list_ui():
         return minutes is not None and minutes <= 0
 
     def mask_userid(uid):
-                                    
+
         uid = format_value(uid)
         if not uid or uid == '-':
             return uid
@@ -81,11 +81,42 @@ def create_device_list_ui():
         return uid[:-8] + '*' * 8
 
     def _toggle_uid(lbl, raw):
-                            
+
         if '*' in lbl.text:
             lbl.set_text(raw)
         else:
             lbl.set_text(mask_userid(raw))
+
+    def _edit_next_time(item):
+
+        dialog = ui.dialog()
+        with dialog, ui.card().classes('p-4 w-80'):
+            ui.label('修改下次发送时间').classes('text-base font-bold mb-2')
+            raw = item.get('next_send_time') or ''
+            initial = ''
+            for fmt in ('%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M'):
+                try:
+                    dt = datetime.strptime(str(raw)[:19], fmt)
+                    initial = dt.strftime('%Y-%m-%dT%H:%M')
+                    break
+                except Exception:
+                    continue
+            nst_input = ui.input('下次发送时间').props('outlined type=datetime-local step=60').classes('w-full')
+            nst_input.value = initial
+            with ui.row().classes('w-full justify-end gap-2 mt-3'):
+                ui.button('取消', on_click=dialog.close).props('flat')
+                ui.button('保存', color='primary', on_click=lambda: _save_next_time(item, nst_input.value, dialog))
+        dialog.open()
+
+    def _save_next_time(item, value, dialog):
+
+        value = (value or '').strip()
+        if value:
+            value = value.replace('T', ' ') + ':00'
+        db_logic.add_or_update_device({'_id': item['_id'], 'next_send_time': value})
+        dialog.close()
+        ui.notify('下次发送时间已更新', type='success', position='top')
+        ui.timer(0.3, load_items, once=True)
 
     def render_table():
         total = len(state['items'])
@@ -107,8 +138,9 @@ def create_device_list_ui():
                     _uid_lbl = ui.label(mask_userid(_uid_raw)).classes('w-[21%] break-all cursor-pointer text-blue-600 dark:text-blue-300 hover:underline')
                     _uid_lbl.on('click', lambda e, lbl=_uid_lbl, raw=_uid_raw: _toggle_uid(lbl, raw))
                     ui.label(format_time(item.get('register_time'))).classes('w-[11%] truncate')
-                    ui.label(format_time(item.get('next_send_time'))).classes('w-[11%] truncate')
-                                                                          
+                    _nst_lbl = ui.label(format_time(item.get('next_send_time'))).classes('w-[11%] truncate cursor-pointer hover:underline')
+                    _nst_lbl.on('click', lambda e, it=item: _edit_next_time(it))
+
                     target = parse_next_time(item.get('next_send_time'))
                     minutes = cooldown_minutes(target)
                     lbl = ui.label(format_cooldown(minutes)).classes('w-[12%] font-medium')
