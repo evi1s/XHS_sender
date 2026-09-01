@@ -8,9 +8,8 @@ import importlib
 
 
 
-
 def create_device_management_ui():
-    """设备管理界面"""
+
 
     ui.add_head_html('<style>.xy-ph .q-field__native::placeholder{opacity:1 !important;color:#9e9e9e !important;}</style>')
     state: Dict[str, any] = {}
@@ -63,7 +62,7 @@ def create_device_management_ui():
             ui.notify(result['message'], color='positive' if result['status'] == 'success' else 'negative')
             if result['status'] == 'success':
                 importlib.reload(config)
-                state['next_send_time'].value = '2099-12-30 00:00:00'
+                state['next_send_time'].value = '2099-12-30T00:00'
                 ui.notify('下次发送时间已锁定。', color='info')
             else:
                 state['health_check_switch'].set_value(False)
@@ -74,7 +73,7 @@ def create_device_management_ui():
                 ui.notify(result['message'], color='positive' if result['status'] == 'success' else 'negative')
                 if result['status'] == 'success':
                     importlib.reload(config)
-                    state['next_send_time'].value = state.get('original_next_send_time', '')
+                    state['next_send_time'].value = (state.get('original_next_send_time', '') or '').replace(' ', 'T')[:16]
                     ui.notify('健康检测号已在配置文件中清空。', color='info')
 
     async def on_device_picked():
@@ -106,10 +105,10 @@ def create_device_management_ui():
 
                 if device_userid and device_userid == current_check_id:
                     state['health_check_switch'].set_value(True)
-                    state['next_send_time'].value = '2099-12-30 00:00:00'
+                    state['next_send_time'].value = '2099-12-30T00:00'
                 else:
                     state['health_check_switch'].set_value(False)
-                    state['next_send_time'].value = original_time
+                    state['next_send_time'].value = original_time.replace(' ', 'T')[:16] if original_time else ''
 
                 ui.notify('设备信息加载成功。', color='positive')
             else:
@@ -138,6 +137,9 @@ def create_device_management_ui():
         if not (state['userid'].value and state['nickname'].value):
             ui.notify('User ID 和 Nickname 不能为空！', color='negative'); return
         data_to_save = {key: state[key].value for key in form_fields}
+        if data_to_save.get('next_send_time'):
+            t = data_to_save['next_send_time']
+            data_to_save['next_send_time'] = t.replace('T', ' ') + ':00' if len(t) == 16 else t
         data_to_save['_id'] = state['doc_id_to_submit'].value
 
         ui.notify('正在保存...', color='info')
@@ -219,7 +221,7 @@ def create_device_management_ui():
 
             with ui.grid(columns=2).classes('w-full items-center gap-4'):
                 with ui.row().classes('w-full items-center gap-4'):
-                    state['next_send_time'] = ui.input('下次发送时间').props('outlined').classes('flex-grow')
+                    state['next_send_time'] = ui.input('下次发送时间').props('outlined type=datetime-local step=60').classes('flex-grow')
                     state['consecutive_failure_days'] = ui.input('连续失败天数').props('readonly outlined').classes('flex-grow')
                 with ui.row().classes('w-full items-center justify-start h-full'):
                     state['health_check_switch'] = ui.switch('健康检测号', on_change=on_health_check_toggled)
