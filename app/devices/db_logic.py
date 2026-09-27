@@ -1,5 +1,7 @@
 from bson.objectid import ObjectId
+from datetime import datetime
 from typing import Optional, Dict
+import config
 from devices.data import get_devices_collection
 from devices.readdate import convert_xhs_register_time
 
@@ -30,9 +32,13 @@ def get_all_devices_list() -> list:
             'next_send_time': 1,
             'consecutive_fail_days': 1,
             'remarks': 1,
+            'daily_usage_count': 1,
+            'last_usage_date': 1,
         },
     ).sort('nickname', 1)
 
+    today_str = datetime.now().strftime('%Y-%m-%d')
+    max_usage = getattr(config, 'MAX_DAILY_USAGE', 0) or 0
     result = []
     for d in devices:
         userid = d.get('userid', 'N/A')
@@ -51,6 +57,8 @@ def get_all_devices_list() -> list:
         except Exception:
             added_time = ''
 
+        used_today = (d.get('daily_usage_count', 0) or 0) if d.get('last_usage_date') == today_str else 0
+
         result.append({
             '_id': str(d.get('_id', '')),
             'nickname': d.get('nickname', 'N/A'),
@@ -60,6 +68,9 @@ def get_all_devices_list() -> list:
             'consecutive_fail_days': d.get('consecutive_fail_days', 0),
             'remarks': d.get('remarks', ''),
             'added_time': added_time,
+            'daily_used': used_today,
+            'daily_max': max_usage,
+            'daily_exhausted': (max_usage > 0 and used_today >= max_usage),
         })
     return result
 
