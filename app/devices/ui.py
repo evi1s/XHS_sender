@@ -2,14 +2,11 @@ import asyncio
 from nicegui import ui
 from typing import Dict
 from . import utils, db_logic
-import config
-from config_updater import update_config_file
-import importlib
 
 
 
 def create_device_management_ui():
-
+    """设备管理界面"""
 
     ui.add_head_html('<style>.xy-ph .q-field__native::placeholder{opacity:1 !important;color:#9e9e9e !important;}</style>')
     state: Dict[str, any] = {}
@@ -25,16 +22,12 @@ def create_device_management_ui():
         state['platform'].value = 'iOS'
         state['save_button'].text = '添加新设备'
         state['delete_button'].set_visibility(False)
-        state['original_next_send_time'] = ''
-        if 'health_check_switch' in state and state['health_check_switch']:
-            state['health_check_switch'].set_value(False)
         if reset_picker and 'device_picker' in state and state['device_picker']:
             state['device_picker'].value = None
 
     async def reload_device_list():
         ui.notify('正在刷新设备列表...', color='info')
         try:
-            importlib.reload(config)
             device_list_of_dicts = await asyncio.to_thread(db_logic.get_all_devices_summary)
             nonlocal device_label_to_id_map
             device_label_to_id_map.clear()
@@ -45,37 +38,6 @@ def create_device_management_ui():
         except Exception as e:
             ui.notify(f'加载设备列表失败: {e}', color='negative', multi_line=True)
 
-    async def on_health_check_toggled(e):
-        importlib.reload(config)
-
-        current_userid = state['userid'].value
-        if not current_userid:
-            ui.notify('请先在表单中填写 UserID！', color='warning')
-            state['health_check_switch'].set_value(False)
-            return
-
-        if e.value:
-            if config.CHECK_USER_ID == current_userid:
-                return
-
-            result = await asyncio.to_thread(update_config_file, 'CHECK_USER_ID', current_userid)
-            ui.notify(result['message'], color='positive' if result['status'] == 'success' else 'negative')
-            if result['status'] == 'success':
-                importlib.reload(config)
-                state['next_send_time'].value = '2099-12-30T00:00'
-                ui.notify('下次发送时间已锁定。', color='info')
-            else:
-                state['health_check_switch'].set_value(False)
-
-        else:
-            if config.CHECK_USER_ID == current_userid:
-                result = await asyncio.to_thread(update_config_file, 'CHECK_USER_ID', "")
-                ui.notify(result['message'], color='positive' if result['status'] == 'success' else 'negative')
-                if result['status'] == 'success':
-                    importlib.reload(config)
-                    state['next_send_time'].value = (state.get('original_next_send_time', '') or '').replace(' ', 'T')[:16]
-                    ui.notify('健康检测号已在配置文件中清空。', color='info')
-
     async def on_device_picked():
         selected_label = state['device_picker'].value
         if not selected_label:
@@ -85,7 +47,6 @@ def create_device_management_ui():
         if not picked_id:
             ui.notify(f'无法找到标签 "{selected_label}" 对应的ID。', color='negative'); return
         try:
-            importlib.reload(config)
             device_data = await asyncio.to_thread(db_logic.get_device_by_id, picked_id)
             if device_data:
                 state['doc_id_to_submit'].value = device_data.get('_id', '')
@@ -98,17 +59,8 @@ def create_device_management_ui():
                 state['save_button'].text = '更新设备数据'
                 state['delete_button'].set_visibility(True)
                 original_time = device_data.get('next_send_time', '')
-                state['original_next_send_time'] = original_time
 
-                device_userid = device_data.get('userid')
-                current_check_id = config.CHECK_USER_ID
-
-                if device_userid and device_userid == current_check_id:
-                    state['health_check_switch'].set_value(True)
-                    state['next_send_time'].value = '2099-12-30T00:00'
-                else:
-                    state['health_check_switch'].set_value(False)
-                    state['next_send_time'].value = original_time.replace(' ', 'T')[:16] if original_time else ''
+                state['next_send_time'].value = original_time.replace(' ', 'T')[:16] if original_time else ''
 
                 ui.notify('设备信息加载成功。', color='positive')
             else:
@@ -163,11 +115,6 @@ def create_device_management_ui():
             device_id = state['doc_id_to_submit'].value
             if not device_id: return
 
-            if state['userid'].value and state['userid'].value == config.CHECK_USER_ID:
-                await asyncio.to_thread(update_config_file, 'CHECK_USER_ID', "")
-                importlib.reload(config)
-                ui.notify('被删除的设备是当前的健康检测号，配置已清空。', color='warning')
-
             ui.notify('删除中...', color='warning')
             delete_result = await asyncio.to_thread(db_logic.delete_device, device_id)
             ui.notify(delete_result['message'], color='positive' if delete_result['status'] == 'success' else 'negative')
@@ -186,7 +133,6 @@ def create_device_management_ui():
 
         with ui.column().classes('w-full gap-4 px-4 py-4'):
             state['doc_id_to_submit'] = ui.input(value='').style('display: none')
-            state['original_next_send_time'] = ''
 
             with ui.row().classes('w-full items-center'):
                 state['toggle_button'] = ui.button('选择现有设备进行编辑', on_click=toggle_edit_mode, icon='edit', color='secondary')
@@ -219,12 +165,9 @@ def create_device_management_ui():
 
             state['remarks'] = ui.textarea('备注 (Remarks)').props('outlined').classes('w-full')
 
-            with ui.grid(columns=2).classes('w-full items-center gap-4'):
-                with ui.row().classes('w-full items-center gap-4'):
-                    state['next_send_time'] = ui.input('下次发送时间').props('outlined type=datetime-local step=60').classes('flex-grow')
-                    state['consecutive_failure_days'] = ui.input('连续失败天数').props('readonly outlined').classes('flex-grow')
-                with ui.row().classes('w-full items-center justify-start h-full'):
-                    state['health_check_switch'] = ui.switch('健康检测号', on_change=on_health_check_toggled)
+            with ui.row().classes('w-full items-center gap-4'):
+                state['next_send_time'] = ui.input('下次发送时间').props('outlined type=datetime-local step=60').classes('flex-grow')
+                state['consecutive_failure_days'] = ui.input('连续失败天数').props('readonly outlined').classes('flex-grow')
 
             with ui.row().classes('w-full mt-4 gap-2'):
                 state['save_button'] = ui.button('添加新设备', on_click=save_device, icon='save', color='primary').classes('flex-grow')
