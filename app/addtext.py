@@ -4,12 +4,12 @@ from bson.objectid import ObjectId
 import math
 from nicegui import ui
 from devices.data import get_collection
-from config import MONGO_COMMENT_COLLECTION
+import config
 
 
 def add_comments_backend(comments_input: str) -> Dict[str, str]:
     """将多条私信文本内容添加到 MongoDB 中。"""
-    collection_name = MONGO_COMMENT_COLLECTION
+    collection_name = config.MONGO_COMMENT_COLLECTION
     comments = [
         line.strip() for line in comments_input.strip().splitlines() if line.strip()
     ]
@@ -32,7 +32,7 @@ def add_comments_backend(comments_input: str) -> Dict[str, str]:
 def get_comments_paginated_backend(page: int, page_size: int = 10) -> Dict:
     """分页获取私信文本列表。"""
     try:
-        collection = get_collection(MONGO_COMMENT_COLLECTION)
+        collection = get_collection(config.MONGO_COMMENT_COLLECTION)
         total_count = collection.count_documents({})
         if total_count == 0:
             return {'items': [], 'total_pages': 0}
@@ -54,7 +54,7 @@ def get_comments_paginated_backend(page: int, page_size: int = 10) -> Dict:
 def delete_comment_by_id_backend(doc_id: str) -> Dict:
     """根据文档的 _id 删除单条私信文本。"""
     try:
-        collection = get_collection(MONGO_COMMENT_COLLECTION)
+        collection = get_collection(config.MONGO_COMMENT_COLLECTION)
         result = collection.delete_one({'_id': ObjectId(doc_id)})
         if result.deleted_count > 0:
             return {'status': 'success', 'message': '评论已删除。'}
@@ -67,7 +67,7 @@ def delete_comment_by_id_backend(doc_id: str) -> Dict:
 def delete_all_comments_backend() -> Dict:
     """清空整个私信文本集合。"""
     try:
-        collection_name = MONGO_COMMENT_COLLECTION
+        collection_name = config.MONGO_COMMENT_COLLECTION
         collection = get_collection(collection_name)
         result = collection.delete_many({})
         return {
