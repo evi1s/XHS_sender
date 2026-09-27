@@ -1,4 +1,3 @@
-                                        
 import time
 import datetime
 import random
@@ -23,7 +22,7 @@ class DeviceManager:
         try:
             self.client = MongoClient(f'mongodb://{config.MONGO_HOST}:{config.MONGO_PORT}/', username=config.MONGO_USERNAME, password=config.MONGO_PASSWORD, authSource=config.MONGO_AUTH_SOURCE, serverSelectionTimeoutMS=5000)
             self.db = self.client[config.MONGO_DB_NAME]; self.collection = self.db[config.MONGO_DEVICE_COLLECTION]; self.client.server_info()
-            logger.info(f"DeviceManager: 成功连接到MongoDB，目标工作集合: '{config.MONGO_DEVICE_COLLECTION}'。")
+            logger.info("成功连接到MongoDB数据库。")
         except Exception as e: logger.critical(f"DeviceManager: 无法连接到MongoDB。错误: {e}"); sys.exit(1)
     def get_device_by_userid(self, userid): doc = self.collection.find_one({'userid': userid}); (doc and '_id' in doc) and doc.pop('_id'); return doc
     def find_available_user_and_claim(self, claim_duration_seconds):
@@ -31,6 +30,28 @@ class DeviceManager:
         query = {'$and': [{'$or': [{'next_send_time': {'$exists': False}}, {'next_send_time': {'$lte': now_str}}]}, {'$or': [{'last_usage_date': {'$ne': today_str}}, {'daily_usage_count': {'$lt': config.MAX_DAILY_USAGE}}]}]}
         update = {'$set': {'next_send_time': claim_until_str}}
         doc = self.collection.find_one_and_update(query, update, sort=[('next_send_time', 1)], return_document=ReturnDocument.AFTER); (doc and '_id' in doc) and doc.pop('_id'); return doc
+    def availability_summary(self):
+        """统计账号不可用的原因（互斥分类）：仅冷却中 / 仅今日次数已用完 / 两者皆有。"""
+        now = datetime.datetime.now(); now_str = now.strftime('%Y-%m-%d %H:%M:%S'); today_str = now.strftime('%Y-%m-%d')
+        max_usage = config.MAX_DAILY_USAGE
+        pipeline = [
+            {'$project': {
+                'time_ok': {'$or': [{'$eq': [{'$ifNull': ['$next_send_time', None]}, None]}, {'$lte': ['$next_send_time', now_str]}]},
+                'usage_ok': {'$or': [{'$ne': [{'$ifNull': ['$last_usage_date', '']}, today_str]}, {'$lt': [{'$ifNull': ['$daily_usage_count', 0]}, max_usage]}]},
+            }},
+            {'$group': {
+                '_id': None,
+                'total': {'$sum': 1},
+                'available': {'$sum': {'$cond': [{'$and': ['$time_ok', '$usage_ok']}, 1, 0]}},
+                'cooling': {'$sum': {'$cond': [{'$and': [{'$not': '$time_ok'}, '$usage_ok']}, 1, 0]}},
+                'exhausted': {'$sum': {'$cond': [{'$and': ['$time_ok', {'$not': '$usage_ok'}]}, 1, 0]}},
+                'both': {'$sum': {'$cond': [{'$and': [{'$not': '$time_ok'}, {'$not': '$usage_ok'}]}, 1, 0]}},
+            }},
+        ]
+        res = list(self.collection.aggregate(pipeline))
+        if not res:
+            return {'total': 0, 'available': 0, 'cooling': 0, 'exhausted': 0, 'both': 0}
+        r = res[0]; r.pop('_id', None); return r
     def increment_daily_usage(self, userid):
         now = datetime.datetime.now(); today_str = now.strftime('%Y-%m-%d'); user_doc = self.collection.find_one({'userid': userid})
         if user_doc:
@@ -55,9 +76,9 @@ class DeviceManager:
     def close(self): self.client.close()
 
 def call_remote_proxy(payload: dict) -> (bool, dict):
-    
-
-       
+    """
+    调用远程执行任务，并以流式方式处理SSE响应。
+    """
     logger.info("准备调用远程服务器执行任务 (SSE模式)...")
     headers = {"X-API-Key": config.PROXY_API_KEY, "Content-Type": "application/json"}
     final_status_data = None
@@ -89,18 +110,18 @@ def call_remote_proxy(payload: dict) -> (bool, dict):
                  return True, final_status_data
             else:
                  reason = final_status_data.get('reason') if final_status_data else "未收到明确的成功或失败状态。"
-                 logger.error(f"远程服务器报告任务失败: {reason}")
+                 logger.error(f"远程服务器报告任务失败！{reason}")
                  return False, final_status_data
 
     except requests.exceptions.HTTPError as e:
-        logger.error(f"远程服务器HTTP错误: 状态码 {e.response.status_code}, 原因: {e.response.text}")
+        logger.error(f"远程服务器HTTP错误: 状态码 {e.response.status_code}")
         return False, {"status": "error", "reason": f"远程服务器HTTP错误: {e.response.text}"}
     except requests.exceptions.RequestException as e:
         logger.error(f"无法连接到服务器或连接中断: {e}")
         return False, {"status": "error", "reason": f"发信帐号异常: {e}"}
 
 
-STALE_CLAIM_MINUTES = 30                             
+STALE_CLAIM_MINUTES = 30
 
 NETWORK_ERROR_KEYWORDS = (
     "网络或连接错误", "客户端连接关闭", "获取IP失败", "无法连接到服务器",
@@ -108,26 +129,24 @@ NETWORK_ERROR_KEYWORDS = (
     "ConnectionError", "Connection", "ProxyError", "timeout", "超时",
 )
 
-                                    
-                                     
 AUTH_ERROR_KEYWORDS = (
     "无效的 api key", "缺少 api key", "套餐已过期", "次数已用完",
     "客户已被暂停", "卡片模式未激活", "卡片发送需",
 )
 
 class NetworkRetryAbortError(Exception):
-                                                   
+    """网络/连接类错误（含"获取小红书IP失败"）：立即终止重试，由外层统一退回接收方。"""
     pass
 
 def _is_network_error(reason) -> bool:
-                                      
+    """判断远程返回的失败原因是否为网络/连接类（非业务）错误。"""
     if not reason:
         return False
     r = str(reason).lower()
     return any(k.lower() in r for k in NETWORK_ERROR_KEYWORDS)
 
 def _is_auth_error(reason) -> bool:
-                                                     
+    """判断远程返回的失败原因是否为确定性鉴权/计费错误（key无效/套餐过期/次数用完等）。"""
     if not reason:
         return False
     r = str(reason).lower()
@@ -135,11 +154,11 @@ def _is_auth_error(reason) -> bool:
 
 
 def _claim_receiver(user_id_collection):
-    
+    """标记式领取一个接收方：文档保留在集合中，仅打上 claimed 标记。
 
-
-
-       
+    相比 find_one_and_delete，即使进程异常退出，userid 也不会丢失；
+    超过 STALE_CLAIM_MINUTES 的孤儿领取会自动重新可领取。
+    """
     stale_before = datetime.datetime.now() - datetime.timedelta(minutes=STALE_CLAIM_MINUTES)
     return user_id_collection.find_one_and_update(
         {'$or': [
@@ -153,7 +172,7 @@ def _claim_receiver(user_id_collection):
 
 
 def _release_receiver(user_id_collection, receiver_doc):
-                                            
+    """将接收方退回 MongoDB（清除领取标记），userid 不丢失。"""
     if not receiver_doc:
         return False
     result = user_id_collection.update_one(
@@ -163,15 +182,15 @@ def _release_receiver(user_id_collection, receiver_doc):
     return result.modified_count > 0
 
 
-def client_main_task(sender_device_config, check_user_device_config, db_collections, device_manager_instance):
+def client_main_task(sender_device_config, db_collections, device_manager_instance):
     userid = sender_device_config['userid']; user_id_collection = db_collections['user_id']; receiver_doc = None; task_completed = False
     try:
         for _ in range(config.MAX_RETRY_ATTEMPTS):
             receiver_doc = _claim_receiver(user_id_collection)
             if receiver_doc: break
-            logger.warning(f"未能从集合'{config.MONGO_USER_ID_COLLECTION}'获取接收方，等待 {config.USER_ID_POLLING_INTERVAL}秒后重试..."); time.sleep(config.USER_ID_POLLING_INTERVAL)
-        if not receiver_doc: raise ValueError(f"在尝试 {config.MAX_RETRY_ATTEMPTS} 次后仍未能获取到接收方。")
-        receiver_id = receiver_doc['user_id']; logger.success(f"[{userid}] 成功获取接收方: {receiver_id}")
+            logger.warning(f"未能从集合'{config.MONGO_USER_ID_COLLECTION}'获取客户UID，等待 {config.USER_ID_POLLING_INTERVAL}秒后重试..."); time.sleep(config.USER_ID_POLLING_INTERVAL)
+        if not receiver_doc: raise ValueError(f"在尝试 {config.MAX_RETRY_ATTEMPTS} 次后仍未能获取到客户UID。")
+        receiver_id = receiver_doc['user_id']; logger.success(f"[{userid}] 读取客户UID: {receiver_id}")
         last_exception = None
         for attempt in range(config.MAX_RETRY_ATTEMPTS):
             try:
@@ -188,29 +207,30 @@ def client_main_task(sender_device_config, check_user_device_config, db_collecti
                         except Exception as e: logger.error(f"加载卡片模板文件 '{card_json_path}' 失败: {e}，本次私信不发送卡片。")
                     else: logger.warning(f"卡片模板文件 '{card_json_path}' 不存在，本次私信将不发送卡片。")
                 if not message_text and not card_template: raise ValueError("消息内容和卡片模板均为空，请检查配置或文件。")
-                payload = {"sender_device_config": sender_device_config, "check_user_device_config": check_user_device_config, "receiver_id": receiver_id, "message_text": message_text, "card_template": card_template}
+                check_userid = (getattr(config, 'CHECK_USER_ID', '') or '').strip()
+                if check_userid:
+                    logger.info(f"使用客户端配置的云托管监测号: {check_userid}")
+                else:
+                    logger.info("未配置客户端云托管监测号，将使用服务端 sconfig.py 中的配置。")
+                payload = {"sender_device_config": sender_device_config, "check_userid": check_userid, "receiver_id": receiver_id, "message_text": message_text, "card_template": card_template}
                 
                 success, response_data = call_remote_proxy(payload)
                 
                 if success:
-                                                   
                     user_id_collection.delete_one({'_id': receiver_doc['_id']})
                     task_completed = True
                     device_manager_instance.increment_daily_usage(userid); device_manager_instance.update_next_send_time(userid, time.time() + config.SUCCESS_SEND_INTERVAL); device_manager_instance.clear_consecutive_failure(userid)
                     logger.success(f"[{userid}] 本次任务完成，该账号状态已更新。"); return
                 else:
                     reason = response_data.get('reason') if response_data else "未知远程错误"
-                                                      
-                                                   
                     if _is_network_error(reason):
-                        raise NetworkRetryAbortError(f"网络或连接错误，终止重试并退回接收方: {str(reason).replace('网络或连接错误: ', '网络超时或帐号异常!')}")
+                        raise NetworkRetryAbortError(f"原因: {str(reason).replace('网络或连接错误: ', '网络超时或帐号异常!')}")
                     if _is_auth_error(reason):
                         raise NetworkRetryAbortError(f"鉴权或套餐错误，终止重试并退回接收方: {reason}")
                     last_exception = Exception(f"远程报告错误 (第 {attempt + 1} 次尝试): {reason}")
                     logger.warning(f"任务尝试失败 (第 {attempt + 1}/{config.MAX_RETRY_ATTEMPTS} 次)，5秒后重试...")
                     time.sleep(5)
             except NetworkRetryAbortError:
-                                                     
                 raise
             except Exception as e: 
                 last_exception = e
@@ -218,10 +238,9 @@ def client_main_task(sender_device_config, check_user_device_config, db_collecti
                 time.sleep(5)
         raise last_exception
     except Exception as final_exception:
-                                                 
         if receiver_doc and not task_completed:
             _release_receiver(user_id_collection, receiver_doc)
-            logger.warning(f"[{userid}] 已将接收方 {receiver_doc.get('user_id')} 的信息回滚（重新入队，userid 未丢失）。")
+            logger.warning(f"[{userid}] 已将客户UID {receiver_doc.get('user_id')} 回滚入库。")
         raise final_exception
 
 
@@ -229,15 +248,6 @@ if __name__ == '__main__':
     log_filename_suffix = sys.argv[1] if len(sys.argv) > 1 else "scheduler"; log_filepath = os.path.join(log_dir, f"client-{log_filename_suffix}.log"); logger.add(log_filepath, level="INFO", format="{time:YYYY-MM-DD HH:mm:ss}|{level}|{message}", rotation="10 MB", encoding='utf-8')
     
     device_manager = DeviceManager()
-
-    checker_config = device_manager.get_device_by_userid(config.CHECK_USER_ID)
-    
-    if not checker_config:
-        logger.critical(f"错误：无法在集合 '{config.MONGO_DEVICE_COLLECTION}' 中找到主账号 '{config.CHECK_USER_ID}'。")
-        device_manager.close()
-        sys.exit(1)
-
-    logger.success(f"成功从 '{config.MONGO_DEVICE_COLLECTION}' 加载主账号。")
 
     if len(sys.argv) > 1:
         pass
@@ -248,17 +258,17 @@ if __name__ == '__main__':
                 claimed_user = device_manager.find_available_user_and_claim(config.USER_POLLING_INTERVAL + 120)
                 if claimed_user:
                     userid = claimed_user['userid']
-                    logger.success(f"找到可用账号 {userid}，开始执行任务...")
+                    logger.success(f"找到可用账号 {userid}，开始执行发送任务...")
                     mongo_client = None
                     try:
                         mongo_client = MongoClient(f'mongodb://{config.MONGO_HOST}:{config.MONGO_PORT}/', username=config.MONGO_USERNAME, password=config.MONGO_PASSWORD, authSource=config.MONGO_AUTH_SOURCE)
                         db = mongo_client[config.MONGO_DB_NAME]
                         db_collections = {"user_id": db[config.MONGO_USER_ID_COLLECTION], "send_text": db[config.MONGO_SEND_TEXT_COLLECTION], "comment": db[config.MONGO_COMMENT_COLLECTION]}
                         
-                        client_main_task(claimed_user, checker_config, db_collections, device_manager)
+                        client_main_task(claimed_user, db_collections, device_manager)
 
                     except Exception as e:
-                        logger.error(f"判定任务最终对 {userid} 失败: {e}")
+                        logger.error(f"判定任务最终对账号{userid} 失败，{e}")
                         consecutive_fails, crossed_day = device_manager.record_consecutive_failure(userid)
                         if consecutive_fails == 1:
                             logger.error(f"[{userid}] 任务首次失败，将短冷却 {config.FIRST_FAILURE_COOLDOWN_INTERVAL}s 后重试。")
@@ -277,7 +287,17 @@ if __name__ == '__main__':
                         time.sleep(config.TASK_INTERVAL)
 
                 else:
-                    logger.info(f"无可用账号，将在 {config.USER_POLLING_INTERVAL} 秒后轮询...")
+                    try:
+                        s = device_manager.availability_summary()
+                        reasons = []
+                        if s['cooling']: reasons.append(f"冷却中 {s['cooling']}")
+                        if s['exhausted']: reasons.append(f"今日次数已用完 {s['exhausted']}")
+                        if s['both']: reasons.append(f"冷却且次数用完 {s['both']}")
+                        if not reasons and s['available']: reasons.append(f"可领取 {s['available']}（可能刚被其他任务占用）")
+                        detail = ("：" + "、".join(reasons)) if reasons else ""
+                        logger.info(f"无可用账号（共 {s['total']} 个{detail}），将在 {config.USER_POLLING_INTERVAL} 秒后轮询...")
+                    except Exception as e:
+                        logger.info(f"无可用账号，将在 {config.USER_POLLING_INTERVAL} 秒后轮询...")
                     time.sleep(config.USER_POLLING_INTERVAL)
         except KeyboardInterrupt:
             logger.warning("捕获到(Ctrl+C)，正在准备退出...")
