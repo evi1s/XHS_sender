@@ -4,12 +4,12 @@ from bson.objectid import ObjectId
 import math
 from nicegui import ui
 from devices.data import get_collection
-from config import MONGO_USER_ID_COLLECTION
+import config
 
 
 def add_user_ids_backend(user_ids_input: str) -> Dict[str, str]:
     """将多个 User ID 添加到 MongoDB 中。"""
-    collection_name = MONGO_USER_ID_COLLECTION
+    collection_name = config.MONGO_USER_ID_COLLECTION
     user_ids = [
         line.strip() for line in user_ids_input.strip().splitlines() if line.strip()
     ]
@@ -31,7 +31,7 @@ def add_user_ids_backend(user_ids_input: str) -> Dict[str, str]:
 def get_user_ids_paginated_backend(page: int, page_size: int = 10) -> Dict:
     """分页获取 User ID 列表。"""
     try:
-        collection = get_collection(MONGO_USER_ID_COLLECTION)
+        collection = get_collection(config.MONGO_USER_ID_COLLECTION)
         total_count = collection.count_documents({})
         if total_count == 0:
             return {'items': [], 'total_pages': 0}
@@ -51,7 +51,7 @@ def get_user_ids_paginated_backend(page: int, page_size: int = 10) -> Dict:
 def delete_user_id_by_id_backend(doc_id: str) -> Dict:
     """根据文档的 _id 删除单个 User ID。"""
     try:
-        collection = get_collection(MONGO_USER_ID_COLLECTION)
+        collection = get_collection(config.MONGO_USER_ID_COLLECTION)
         result = collection.delete_one({'_id': ObjectId(doc_id)})
         if result.deleted_count > 0:
             return {'status': 'success', 'message': 'User ID 已删除。'}
@@ -64,7 +64,7 @@ def delete_user_id_by_id_backend(doc_id: str) -> Dict:
 def delete_all_user_ids_backend() -> Dict:
     """清空整个 User ID 集合。"""
     try:
-        collection_name = MONGO_USER_ID_COLLECTION
+        collection_name = config.MONGO_USER_ID_COLLECTION
         collection = get_collection(collection_name)
         result = collection.delete_many({})
         return {
