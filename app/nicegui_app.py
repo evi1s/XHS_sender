@@ -9,7 +9,7 @@ from datetime import datetime
 from nicegui import app, ui
 from database import connect_to_mongo, close_mongo_connection
 from runapp import create_runner_ui
-from config import ADMIN_USERNAME, ADMIN_PASSWORD, MONGO_USER_ID_COLLECTION
+from config import ADMIN_USERNAME, ADMIN_PASSWORD
 from settings import create_settings_ui
 from setcard import create_card_editor_ui
 from setcard2 import create_card_editor_ui2
@@ -34,11 +34,10 @@ README_URL = "https://commteam.it.com/web/readme.txt"
 
 
 def md2html(text):
-                                                              
+    """将 readme 内容渲染为美观 HTML：内容为 HTML 则原样渲染，否则按 Markdown 转换"""
     import re as _re
     _t = text or ''
     if _re.search(r'<[a-zA-Z][a-zA-Z0-9]*[^>]*>', _t):
-                                     
         return '<div style="width:100%%;box-sizing:border-box">%s</div>' % _t
     lines = _t.splitlines()
     out = []
@@ -66,7 +65,7 @@ def md2html(text):
 
 
 def _md_line(t):
-                                                 
+    """转义 HTML 后处理 **加粗**（html.escape 不影响 * 号）"""
     import html as _html
     import re as _re
     t = _html.escape(t)
@@ -94,7 +93,7 @@ MENU_ITEMS = {
 
 
 def _stat_card(title: str, icon: str, color: str) -> dict:
-                                          
+    """仪表盘统计卡片，返回 value/sub 标签引用以便定时刷新。"""
     with ui.card().classes('w-60 rounded-2xl shadow-lg bg-white dark:bg-gray-800'):
         with ui.row().classes('items-center gap-4'):
             with ui.element('div').classes(f'w-12 h-12 rounded-xl bg-gradient-to-br {color} flex items-center justify-center shrink-0'):
@@ -109,7 +108,7 @@ def _stat_card(title: str, icon: str, color: str) -> dict:
 
 
 async def _refresh_stats(cards: dict, welcome_id_label=None):
-                                              
+    """刷新主页全部统计卡片（设备/使用量/userid/内存/网络/服务端）。"""
     try:
         proc = getattr(runapp, 'SCRIPT_PROCESS', None)
         running = proc is not None and getattr(proc, 'returncode', None) is None
@@ -143,7 +142,7 @@ async def _refresh_stats(cards: dict, welcome_id_label=None):
         cards['usage']['sub'].set_text('查询失败')
 
     try:
-        n_userids = get_collection(MONGO_USER_ID_COLLECTION).count_documents({})
+        n_userids = get_collection(config.MONGO_USER_ID_COLLECTION).count_documents({})
         cards['userids']['value'].set_text(str(n_userids))
         cards['userids']['sub'].set_text('待发送的接收方')
     except Exception:
@@ -233,7 +232,7 @@ async def _refresh_stats(cards: dict, welcome_id_label=None):
 
 
 def render_home(welcome_id_label=None):
-                             
+    """主页仪表盘：系统概览统计 + 公告区。"""
     with ui.column().classes('w-full max-w-5xl gap-6'):
         notice_card = ui.card().classes('fixed bottom-4 right-4 z-50 w-96 max-w-[92vw] shadow-2xl rounded-2xl')
         with notice_card:
@@ -478,13 +477,13 @@ async def main_page():
 
 
 def _hash_password(username: str, password: str) -> str:
-                 
+    """用户密码哈希。"""
     return hashlib.sha256(f'{username}:{password}'.encode('utf-8')).hexdigest()
 
 
 def verify_user(username: str, password: str):
-    
-                               
+    """验证登录：优先查 Mongo users 集合；不存在时用 config 超管兜底并自动播种。
+    返回 (ok, role, username)。"""
     users = get_collection('users')
     u = users.find_one({'username': username})
     if u:
@@ -504,7 +503,7 @@ def verify_user(username: str, password: str):
 
 
 def create_user_manage_ui():
-                                       
+    """管理设置：用户列表 + 添加/删除用户（仅 admin）。"""
     current_user = app.storage.user.get('username', '')
 
     def _load_users():
@@ -576,13 +575,11 @@ def create_user_manage_ui():
                 table_wrapper.clear()
                 with table_wrapper:
                     rows = _load_users()
-                        
                     with ui.row().classes('w-full items-center px-2 py-1 bg-gray-200 rounded font-bold text-sm'):
                         ui.label('用户名').classes('w-1/4')
                         ui.label('角色').classes('w-1/4')
                         ui.label('创建时间').classes('w-1/3')
                         ui.label('操作').classes('w-1/6')
-                         
                     for r in rows:
                         with ui.row().classes('w-full items-center px-2 py-1 border-b border-gray-200 text-sm'):
                             ui.label(r['username']).classes('w-1/4')
