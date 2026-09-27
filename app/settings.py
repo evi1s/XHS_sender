@@ -1,13 +1,15 @@
 import asyncio
+import importlib
 import re
 from typing import Dict
 from nicegui import ui, elements
+import config as _config_module
 
 CONFIG_FILE_PATH = 'config.py'
 
 
 def mask_user_id(uid: str) -> str:
-                               
+    """脱敏：保留前部，后4位用*号；短id全星号"""
     if not uid:
         return ''
     if len(uid) <= 4:
@@ -16,7 +18,7 @@ def mask_user_id(uid: str) -> str:
 
 
 def _section_title(text: str, icon: str = 'settings'):
-                  
+    """渐变风格分区标题"""
     with ui.row().classes('w-full items-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg px-3 py-2'):
         ui.icon(icon).classes('text-white')
         ui.label(text).classes('text-white font-semibold')
@@ -24,7 +26,7 @@ def _section_title(text: str, icon: str = 'settings'):
 
 def create_settings_ui():
     inputs: Dict[str, elements.ValueElement] = {}
-    full_user_id = {'value': ''}                             
+    full_user_id = {'value': ''}
 
     async def load_config():
         def sync_load():
@@ -46,7 +48,6 @@ def create_settings_ui():
             if key in config_data:
                 element.set_value(config_data[key])
 
-                                         
         if 'CHECK_USER_ID' in config_data and config_data['CHECK_USER_ID']:
             full_user_id['value'] = config_data['CHECK_USER_ID']
             inputs['CHECK_USER_ID'].set_value(mask_user_id(config_data['CHECK_USER_ID']))
@@ -56,7 +57,6 @@ def create_settings_ui():
     async def save_config():
         config_values = {key: element.value for key, element in inputs.items()}
 
-                                              
         uid_val = inputs['CHECK_USER_ID'].value
         if full_user_id['value'] and uid_val in (mask_user_id(full_user_id['value']), full_user_id['value']):
             config_values['CHECK_USER_ID'] = full_user_id['value']
@@ -98,6 +98,8 @@ def create_settings_ui():
 
                 with open(CONFIG_FILE_PATH, 'w', encoding='utf-8') as f:
                     f.writelines(new_lines)
+
+                importlib.reload(_config_module)
 
                 return True, ""
 
@@ -147,12 +149,12 @@ def create_settings_ui():
                     ui.icon('favorite', size='sm').classes('text-rose-500')
                     ui.label('健康检查设置').classes('text-lg font-semibold text-rose-600 dark:text-rose-300')
                 with ui.row().classes('w-full items-center gap-4 mt-2'):
-                    ui.icon('help_outline', color='grey', size='sm').tooltip('用于检测小红书账发信账账号健康状态。此UuerID务必需要正常可收发信账号。')
-                    check_uid_input = ui.input('收发信主账号UserId(此号不参与群发)').props('style="width: 250px"')
+                    ui.icon('help_outline', color='grey', size='sm').tooltip('用于账号健康检测的云托管监测号。需要申请企业私信通账户，并且配置AI回复。')
+                    check_uid_input = ui.input('云托管监测号UserId(默认留空即可)').props('style="width: 300px"')
                     inputs['CHECK_USER_ID'] = check_uid_input
 
                     def toggle_check_uid():
-                                                 
+                        """眼睛按钮：切换 脱敏值 <-> 完整值"""
                         if check_uid_input.value == full_user_id['value'] and full_user_id['value']:
                             check_uid_input.set_value(mask_user_id(full_user_id['value']))
                         else:
@@ -176,7 +178,6 @@ def create_settings_ui():
                         inputs['MONGO_DEVICE_COLLECTION'] = ui.input('设备集').classes('w-full max-w-md')
                         inputs['MONGO_USER_ID_COLLECTION'] = ui.input('UserID集(UserID管理)').classes('w-full max-w-md')
                         inputs['MONGO_SEND_TEXT_COLLECTION'] = ui.input('发送文本集').classes('w-full max-w-md')
-                        inputs['MONGO_CHECK_STATUS_COLLECTION'] = ui.input('状态码检测集(默认)').classes('w-full max-w-md')
 
                 with ui.card().classes('w-full'):
                     _section_title('任务与连接参数', 'timer')
@@ -188,12 +189,9 @@ def create_settings_ui():
                         return el
 
                     with ui.column().classes('w-full items-center gap-2 mt-2'):
-                        create_number_input('DEFAULT_SOCKET_TIMEOUT', 'Socket 超时 (秒)', '与代理或目标服务器建立连接和等待响应的最长时间。').classes('w-full max-w-md')
-                        create_number_input('RECONNECT_DELAY', 'IP连接失败间隔 (秒)', '当一个IP地址连接失败后，需要等待多少秒才能再次使用该IP。').classes('w-full max-w-md')
                         create_number_input('SUCCESS_SEND_INTERVAL', '成功冷却时间 (秒)', '一条私信成功发送后，该账号需要等待多少秒才能发送下一条。').classes('w-full max-w-md')
                         create_number_input('FAILURE_COOLDOWN_INTERVAL', '首次失败冷却时间 (秒)', '一条私信发送失败后，需要等待多少秒才能进行下一次尝试。').classes('w-full max-w-md')
                         create_number_input('FAILURE_COOLDOWN_30_DAYS', '连续失败冷却时间 (秒)', '当账号健康检查为异常时，需冷却多少秒再查，一般是30天。').classes('w-full max-w-md')
-                        create_number_input('INITIAL_MESSAGE_DELAY', '检查完成发送消息间隔 (秒)', '账号健康检查通过后，延迟多少秒再开始发送第一条私信。').classes('w-full max-w-md')
                         create_number_input('TASK_INTERVAL', '下个任务时间 (秒)', '获取下一个任务的间隔时间。').classes('w-full max-w-md')
                         create_number_input('USER_ID_POLLING_INTERVAL', '私信接收方补充时间 (秒)', '每隔多少秒检查一次数据库，补充新的私信接收者（UserID）。').classes('w-full max-w-md')
                         create_number_input('USER_POLLING_INTERVAL', '私信发送方补充时间 (秒)', '每隔多少秒检查一次数据库，补充新的私信发送账号。').classes('w-full max-w-md')
