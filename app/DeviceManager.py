@@ -1,4 +1,3 @@
-
 from pymongo import MongoClient
 from loguru import logger
 

@@ -1,4 +1,3 @@
-
 import re
 import os
 from threading import Lock
@@ -28,7 +27,7 @@ def update_config_file(key: str, value: str) -> dict:
                 lines = f.readlines()
 
             pattern = re.compile(r"^(%s\s*=\s*)(['\"])?.*(['\"])?\s*$" % re.escape(key))
-
+            
             new_lines = []
             found = False
             for line in lines:

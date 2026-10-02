@@ -40,12 +40,12 @@ async def verify_user_credentials(username: str, plain_password: str) -> bool:
         input_hashed_password = get_password_hash(plain_password)
 
         is_valid = (input_hashed_password == stored_hashed_password)
-
+        
         if is_valid:
             print(f"用户 '{username}' 验证成功。")
         else:
             print(f"验证失败: 用户 '{username}' 的密码错误。")
-
+            
         return is_valid
 
     except Exception as e:

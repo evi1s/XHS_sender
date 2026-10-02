@@ -1,6 +1,6 @@
 import motor.motor_asyncio
 from config import (
-    MONGO_HOST, MONGO_PORT, MONGO_USERNAME, MONGO_PASSWORD,
+    MONGO_HOST, MONGO_PORT, MONGO_USERNAME, MONGO_PASSWORD, 
     MONGO_AUTH_SOURCE, MONGO_DB_NAME
 )
 
@@ -20,7 +20,7 @@ class Database:
                 username=MONGO_USERNAME,
                 password=MONGO_PASSWORD,
                 authSource=MONGO_AUTH_SOURCE,
-                serverSelectionTimeoutMS=5000
+                serverSelectionTimeoutMS=5000 
             )
         return cls._client
 
