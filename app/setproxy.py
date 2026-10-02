@@ -1,77 +1,61 @@
-
-import os
-import json
-import random
-import time
+import asyncio
 from nicegui import ui
 
-DEFAULT_SOCKS5_PROXY = {
-    'host': '127.0.0.1',
-    'port': 1080,
-    'username': '',
-    'password': '',
-    'enabled': False,
-}
-
-socks5_config = DEFAULT_SOCKS5_PROXY.copy()
-
-
-def load_socks5_config():
-    global socks5_config
-    config_file = 'socks5_config.json'
-    if os.path.exists(config_file):
-        try:
-            with open(config_file, 'r', encoding='utf-8') as f:
-                socks5_config.update(json.load(f))
-        except Exception as e:
-            print(f'读取socks5配置文件失败: {e}')
-    return socks5_config
-
-
-def save_socks5_config():
-    config_file = 'socks5_config.json'
-    try:
-        with open(config_file, 'w', encoding='utf-8') as f:
-            json.dump(socks5_config, f, ensure_ascii=False, indent=2)
-    except Exception as e:
-        print(f'保存socks5配置文件失败: {e}')
-
-
-def create_socks5_config_ui():
+def create_proxy_settings_ui():
     """
-    创建 SOCKS5 代理配置页面。
+    Creates the entire UI for the proxy settings page (Button 3),
+    which includes cards for both listening and sending proxies.
     """
-    load_socks5_config()
+    
+    def _create_single_proxy_card(title: str, config_path: str):
+        """Helper function to create one proxy configuration card."""
+        with ui.card().classes('w-full max-w-md'):
+            ui.label(title).classes('text-2xl')
+            enabled_switch = ui.switch('启用代理')
+            ui.input('代理类型', value='SOCKS5').props('readonly')
+            host_input = ui.input('代理主机')
+            port_input = ui.number('代理端口', value=1080, format='%.0f')
+            user_input = ui.input('用户名')
+            pass_input = ui.input('密码', password=True, password_toggle_button=True)
+            
+            async def load_and_populate():
+                """Loads proxy settings from a given .py file."""
+                def sync_load_from_disk():
+                    try:
+                        with open(config_path, 'r', encoding='utf-8') as f:
+                            exec_namespace = {}
+                            exec(f.read(), exec_namespace)
+                            return exec_namespace
+                    except FileNotFoundError:
+                        return {}
+                    except Exception as e:
+                        ui.notify(f'加载 {config_path} 时出错: {e}', color='negative')
+                        return {}
+                
+                config_data = await asyncio.to_thread(sync_load_from_disk)
+                enabled_switch.value = config_data.get('PROXY_ENABLED', False)
+                host_input.value = config_data.get('PROXY_HOST', '')
+                port_input.value = config_data.get('PROXY_PORT', 1080)
+                user_input.value = config_data.get('PROXY_USERNAME', '')
+                pass_input.value = config_data.get('PROXY_PASSWORD', '')
 
-    with ui.card().classes('w-full max-w-5xl mx-auto rounded-2xl shadow-lg'):
-        with ui.row().classes('w-full items-center bg-gradient-to-r from-indigo-600 to-purple-600 rounded-t-2xl px-4 py-3'):
-            ui.icon('vpn_key', size='28px').classes('text-white')
-            ui.label('SOCKS5 代理配置').classes('text-xl font-bold text-white')
+            async def save_config():
+                """Saves the current UI state to the .py file."""
+                content = (f"PROXY_ENABLED = {enabled_switch.value}\nPROXY_TYPE = \"SOCKS5\"\n"
+                           f"PROXY_HOST = \"{host_input.value or ''}\"\n"
+                           f"PROXY_PORT = {int(port_input.value or 1080)}\n"
+                           f"PROXY_USERNAME = \"{user_input.value or ''}\"\n"
+                           f"PROXY_PASSWORD = \"{pass_input.value or ''}\"\n")
+                try:
+                    with open(config_path, 'w', encoding='utf-8') as f:
+                        f.write(content)
+                    ui.notify(f'{title} 已成功保存！', color='positive')
+                except Exception as e:
+                    ui.notify(f'保存至 {config_path} 时出错: {e}', color='negative')
+            
+            ui.button('保存配置', on_click=save_config).classes('mt-4')
+            ui.timer(0.2, load_and_populate, once=True)
 
-        with ui.column().classes('w-full gap-2 px-6 py-4'):
-            with ui.card().classes('w-full gap-2 p-4'):
-                ui.label('启用 SOCKS5').classes('text-sm font-semibold text-indigo-600')
-                socks5_enabled = ui.switch('启用代理', value=socks5_config.get('enabled', False)).classes('mt-1')
-                ui.label('代理服务器地址').classes('text-sm font-semibold text-indigo-600 mt-2')
-                socks5_host = ui.input('主机', value=socks5_config.get('host', '127.0.0.1')).props('outlined').classes('w-full')
-                ui.label('代理端口').classes('text-sm font-semibold text-indigo-600 mt-2')
-                socks5_port = ui.input('端口', value=str(socks5_config.get('port', 1080))).props('outlined').classes('w-full')
-                ui.label('代理用户名（可选）').classes('text-sm font-semibold text-indigo-600 mt-2')
-                socks5_username = ui.input('用户名', value=socks5_config.get('username', '')).props('outlined').classes('w-full')
-                ui.label('代理密码（可选）').classes('text-sm font-semibold text-indigo-600 mt-2')
-                socks5_password = ui.input('密码', value=socks5_config.get('password', ''), password=True).props('outlined').classes('w-full')
-
-            def save_socks5():
-                socks5_config.update({
-                    'enabled': socks5_enabled.value,
-                    'host': socks5_host.value,
-                    'port': int(socks5_port.value or 1080),
-                    'username': socks5_username.value,
-                    'password': socks5_password.value,
-                })
-                save_socks5_config()
-                ui.notify('SOCKS5 配置已保存', type='positive')
-
-            with ui.row().classes('w-full justify-center gap-4 mt-4'):
-                ui.button('保存配置', on_click=save_socks5).props('color=primary').classes('px-8')
-                ui.button('重新加载', on_click=lambda: (load_socks5_config(), ui.notify('配置已重新加载', type='info'))).props('color=secondary').classes('px-8')
+    with ui.row().classes('w-full no-wrap justify-center gap-8'):
+        _create_single_proxy_card(title='健康检查专用代理', config_path='proxy_config.py')
+        _create_single_proxy_card(title='私信发送账号代理', config_path='proxy_config_us1.py')

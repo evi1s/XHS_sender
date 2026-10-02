@@ -1,4 +1,3 @@
-           
 
 import asyncio
 import sys
@@ -20,7 +19,7 @@ GLOBAL_LOG_CONTENT: List[str] = [
 
 
 def clean_ansi(text: str) -> str:
-                    
+    """移除ANSI转义字符"""
     ansi_pattern = re.compile(r'\x1b\[[0-9;]*m')
     return ansi_pattern.sub('', text)
 
@@ -59,7 +58,7 @@ async def cleanup_on_shutdown():
 
 
 async def run_script():
-                     
+    """启动子进程并监控其输出"""
     global SCRIPT_PROCESS, GLOBAL_LOG_CONTENT
     if SCRIPT_PROCESS is not None and SCRIPT_PROCESS.returncode is None:
         ui.notify('任务已在运行中...', color='warning')

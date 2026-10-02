@@ -1,3 +1,9 @@
+"""
+update.py - 面板自动更新模块
+- 检测: 对比 GitHub app/ 目录最新 commit SHA 与本地记录
+- 更新: 下载 app/ 下 .py / img/ / 卡片模板(xhs2.json xhs3.json), 校验后覆盖, 不保留旧版
+- 跳过: config.py (GitHub 为环境变量版, 容器为硬编码版)
+"""
 import json
 import os
 import shutil
@@ -34,6 +40,7 @@ def _download(url, dest):
 
 
 def get_remote_state():
+    """GitHub app/ 目录最新 commit"""
     data = _api('https://api.github.com/repos/%s/commits?path=app&per_page=1' % REPO)
     commit = data[0]
     return {
@@ -57,6 +64,7 @@ def save_state(sha):
 
 
 def check_update():
+    """有更新返回 remote dict, 无更新返回 None, 首次静默记录基线"""
     remote = get_remote_state()
     local = get_local_state()
     if local is None:
@@ -68,6 +76,7 @@ def check_update():
 
 
 def list_app_files():
+    """远程 app/ 文件清单(过滤)"""
     data = _api('https://api.github.com/repos/%s/git/trees/%s?recursive=1' % (REPO, BRANCH))
     files = []
     for item in data.get('tree', []):
@@ -84,6 +93,7 @@ def list_app_files():
 
 
 def do_update(dry_run=False):
+    """执行更新。返回 (ok, message)。dry_run 只下载校验不覆盖。"""
     files = list_app_files()
     if not files:
         return False, '未获取到远程文件清单'
@@ -141,4 +151,5 @@ def do_update(dry_run=False):
 
 
 def restart_nicegui():
+    """脱离当前进程重启面板"""
     subprocess.Popen(['bash', '-c', RESTART_CMD])

@@ -1,10 +1,8 @@
-                       
-
-   
-
-
-
-   
+"""
+小红书短链接生成器（客户端版，仅远程调用）
+- 核心算法已迁移至服务端容器 77fa5e2a986a（shorturl_service.py），客户端不再包含签名逻辑
+- 通过服务端 POST /short-url 接口生成短链接
+"""
 import httpx
 from nicegui import app, ui
 import config
@@ -14,7 +12,7 @@ STATUS_PATH = '/customer/status'
 
 
 def _server_base() -> str:
-                                                        
+    """从 PROXY_SERVER_URL（/execute-task 结尾）提取服务端基础地址。"""
     base = config.PROXY_SERVER_URL
     for suffix in ('/execute-task', '/execute_task', '/health'):
         if suffix in base:
@@ -23,7 +21,7 @@ def _server_base() -> str:
 
 
 async def generate_short_url_backend(long_url: str) -> str:
-                                        
+    """远程调用服务端 /short-url 接口生成小红书短链接。"""
     url = _server_base() + SHORT_URL_PATH
     headers = {
         'X-API-Key': config.PROXY_API_KEY,
@@ -56,7 +54,7 @@ async def generate_short_url_backend(long_url: str) -> str:
 
 
 async def _fetch_shorturl_remaining():
-                                                                  
+    """查询服务端 /customer/status 获取短链剩余次数。返回 (remaining, enabled)。"""
     url = _server_base() + STATUS_PATH
     headers = {'X-API-Key': config.PROXY_API_KEY}
     try:
