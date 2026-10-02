@@ -205,7 +205,7 @@ _FACTORY_DEFAULTS = {
 
 def create_settings_ui():
     if not _UI_CSS_INJECTED['done']:
-        ui.add_css(_ROUNDED_RADIO_CSS)
+        ui.add_css(_ROUNDED_RADIO_CSS, shared=True)
         _UI_CSS_INJECTED['done'] = True
 
     inputs: Dict[str, elements.ValueElement] = {}
