@@ -25,7 +25,7 @@ MONGO_AUTH_SOURCE = os.getenv("MONGO_AUTH_SOURCE", "admin")
 # ==============================================================================
 MONGO_DB_NAME = 'xhs_demo'
 MONGO_MEMBER_COLLECTION = 'member'
-MONGO_DEVICE_COLLECTION = 'devices_8p_me'
+MONGO_DEVICE_COLLECTION = os.getenv("MONGO_DEVICE_COLLECTION", "devices_4hbf31")
 # MONGO_MASTER_DEVICE_COLLECTION = 'devices'
 MONGO_USER_ID_COLLECTION = 'userid'
 MONGO_SEND_TEXT_COLLECTION = 'sendtext'
