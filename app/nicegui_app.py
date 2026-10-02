@@ -9,7 +9,6 @@ from datetime import datetime
 from nicegui import app, ui
 from database import connect_to_mongo, close_mongo_connection
 from runapp import create_runner_ui
-from config import ADMIN_USERNAME, ADMIN_PASSWORD
 from settings import create_settings_ui
 from setcard import create_card_editor_ui
 from setcard2 import create_card_editor_ui2
@@ -347,7 +346,7 @@ async def main_page():
 
         with ui.column().classes('absolute-center items-center gap-4'):
             with ui.card().classes('w-96 p-8 rounded-lg shadow-xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm'):
-                ui.label('小红书控制面板(3.3)').classes('self-center text-2xl font-semibold text-gray-800 dark:text-white')
+                ui.label('小红书控制面板(v3.5)').classes('self-center text-2xl font-semibold text-gray-800 dark:text-white')
                 username = ui.input('账号').props('outlined dense').classes('w-full')
                 password = ui.input('密码', password=True, password_toggle_button=True).props('outlined dense').classes('w-full')
 
@@ -452,7 +451,7 @@ async def main_page():
             ui.label('导航菜单').classes('text-lg font-semibold')
 
         _current_user = app.storage.user.get('username', '')
-        _current_role = app.storage.user.get('role', '') or ('admin' if _current_user == ADMIN_USERNAME else 'user')
+        _current_role = app.storage.user.get('role', '') or ('admin' if _current_user == getattr(config, 'ADMIN_USERNAME', '') else 'user')
         for name, details in MENU_ITEMS.items():
             if name == 'button10':
                 continue
@@ -482,23 +481,36 @@ def _hash_password(username: str, password: str) -> str:
 
 
 def verify_user(username: str, password: str):
-    """验证登录：优先查 Mongo users 集合；不存在时用 config 超管兜底并自动播种。
-    返回 (ok, role, username)。"""
+    """验证登录。
+
+    - 超管（config.ADMIN_USERNAME）：以 config.py 为权威来源，密码通过后自动把
+      Mongo 中的哈希/角色同步为最新，确保改 config.py 即时生效，不再被旧记录遮盖。
+    - 其它用户：查 Mongo users 集合。
+    返回 (ok, role, username)。
+    """
     users = get_collection('users')
+    admin_name = getattr(config, 'ADMIN_USERNAME', '') or ''
+    admin_pwd = getattr(config, 'ADMIN_PASSWORD', '') or ''
+
+    if admin_name and username == admin_name and password == admin_pwd:
+        new_hash = _hash_password(admin_name, admin_pwd)
+        existing = users.find_one({'username': admin_name})
+        if not existing:
+            users.insert_one({
+                'username': admin_name,
+                'password': new_hash,
+                'role': 'admin',
+                'created_at': datetime.now(),
+            })
+        elif existing.get('password') != new_hash or existing.get('role') != 'admin':
+            users.update_one({'username': admin_name}, {'$set': {'password': new_hash, 'role': 'admin'}})
+        return True, 'admin', username
+
     u = users.find_one({'username': username})
     if u:
         if u.get('password') == _hash_password(username, password):
             return True, u.get('role', 'user'), username
         return False, None, None
-    if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
-        if not users.find_one({'username': ADMIN_USERNAME}):
-            users.insert_one({
-                'username': ADMIN_USERNAME,
-                'password': _hash_password(ADMIN_USERNAME, ADMIN_PASSWORD),
-                'role': 'admin',
-                'created_at': datetime.now(),
-            })
-        return True, 'admin', username
     return False, None, None
 
 
@@ -523,7 +535,7 @@ def create_user_manage_ui():
         if uname == current_user:
             ui.notify('不能删除当前登录用户', color='negative')
             return
-        if uname == ADMIN_USERNAME:
+        if uname == getattr(config, 'ADMIN_USERNAME', ''):
             ui.notify('不能删除超级管理员', color='negative')
             return
         users = get_collection('users')
@@ -585,7 +597,7 @@ def create_user_manage_ui():
                             ui.label(r['username']).classes('w-1/4')
                             ui.label('管理员' if r['role'] == 'admin' else '普通用户').classes('w-1/4')
                             ui.label(r['created_at']).classes('w-1/3 text-gray-600')
-                            if r['username'] == current_user or r['username'] == ADMIN_USERNAME:
+                            if r['username'] == current_user or r['username'] == getattr(config, 'ADMIN_USERNAME', ''):
                                 ui.label('不可删除').classes('w-1/6 text-gray-400 text-xs')
                             else:
                                 ui.button(icon='delete', on_click=lambda u=r['username']: _delete_user(u)).props('flat round dense color=negative').classes('w-1/6')
@@ -603,6 +615,6 @@ app.on_startup(connect_to_mongo)
 app.on_shutdown(close_mongo_connection)
 
 ui.run(storage_secret='a_very_long_and_super_secret_string_123!@#',
-       title='小红书控制面板(Beta_3.3)',
+       title='小红书控制面板',
        reload=False,
        dark=False)
