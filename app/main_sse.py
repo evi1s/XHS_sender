@@ -17,6 +17,9 @@ def custom_stdout_sink(message): sys.stdout.write(message); sys.stdout.flush()
 logger.add(custom_stdout_sink, level="INFO", format="<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green>| <level>{level: <8}</level>| <level>{message}</level>", colorize=True)
 
 
+MAX_PROBE_ATTEMPTS = 2
+
+
 class DeviceManager:
     def __init__(self):
         try:
@@ -59,20 +62,33 @@ class DeviceManager:
             else: self.collection.update_one({'userid': userid}, {'$set': {'daily_usage_count': 1, 'last_usage_date': today_str}})
     def update_next_send_time(self, userid, next_send_timestamp): next_send_datetime = datetime.datetime.fromtimestamp(next_send_timestamp); next_send_time_str = next_send_datetime.strftime('%Y-%m-%d %H:%M:%S'); self.collection.update_one({'userid': userid}, {'$set': {'next_send_time': next_send_time_str}})
     def record_consecutive_failure(self, userid):
+        """记录一次失败，返回 (当日累计尝试次数, 连续失败天数, 是否跨天连续失败)。
+
+        - daily_fail_attempts：每个自然日清零，用于控制当日测活次数。
+        - consecutive_fail_days：按自然日计数，同一天多次失败只记 1 天。
+        - crossed_day：昨天失败过、今天又失败（跨天连续）。
+        """
         today_str = datetime.datetime.now().strftime('%Y-%m-%d'); user_doc = self.collection.find_one({'userid': userid});
-        if not user_doc: return 1, False
-        last_fail_date = user_doc.get('last_fail_date', ''); consecutive_fail_days = user_doc.get('consecutive_fail_days', 0)
+        if not user_doc: return 1, 1, False
+        last_fail_date = user_doc.get('last_fail_date', '') or ''
+        consecutive_fail_days = user_doc.get('consecutive_fail_days', 0) or 0
+        daily_fail_attempts = user_doc.get('daily_fail_attempts', 0) or 0
         crossed_day = False
-        if last_fail_date == today_str: consecutive_fail_days += 1
-        elif last_fail_date:
-            try:
-                if (datetime.datetime.strptime(today_str, '%Y-%m-%d') - datetime.datetime.strptime(last_fail_date, '%Y-%m-%d')).days == 1:
-                    consecutive_fail_days += 1; crossed_day = True
+        if last_fail_date == today_str:
+            daily_fail_attempts += 1
+        else:
+            daily_fail_attempts = 1
+            if last_fail_date:
+                try:
+                    gap_days = (datetime.datetime.strptime(today_str, '%Y-%m-%d') - datetime.datetime.strptime(last_fail_date, '%Y-%m-%d')).days
+                except Exception:
+                    gap_days = None
+                if gap_days == 1: consecutive_fail_days += 1; crossed_day = True
                 else: consecutive_fail_days = 1
-            except: consecutive_fail_days = 1
-        else: consecutive_fail_days = 1
-        self.collection.update_one({'userid': userid}, {'$set': {'last_fail_date': today_str, 'consecutive_fail_days': consecutive_fail_days}}); return consecutive_fail_days, crossed_day
-    def clear_consecutive_failure(self, userid): self.collection.update_one({'userid': userid}, {'$set': {'consecutive_fail_days': 0, 'last_fail_date': ''}})
+            else: consecutive_fail_days = 1
+        self.collection.update_one({'userid': userid}, {'$set': {'last_fail_date': today_str, 'consecutive_fail_days': consecutive_fail_days, 'daily_fail_attempts': daily_fail_attempts}})
+        return daily_fail_attempts, consecutive_fail_days, crossed_day
+    def clear_consecutive_failure(self, userid): self.collection.update_one({'userid': userid}, {'$set': {'consecutive_fail_days': 0, 'last_fail_date': '', 'daily_fail_attempts': 0}})
     def close(self): self.client.close()
 
 def call_remote_proxy(payload: dict) -> (bool, dict):
@@ -209,9 +225,9 @@ def client_main_task(sender_device_config, db_collections, device_manager_instan
                 if not message_text and not card_template: raise ValueError("消息内容和卡片模板均为空，请检查配置或文件。")
                 check_userid = (getattr(config, 'CHECK_USER_ID', '') or '').strip()
                 if check_userid:
-                    logger.info(f"使用客户端配置的云托管监测号: {check_userid}")
+                    logger.info(f"云托管测活号: {check_userid}")
                 else:
-                    logger.info("未配置客户端云托管监测号，将使用服务端 sconfig.py 中的配置。")
+                    logger.info("未配置云托管测活号，将使用默认配置。")
                 payload = {"sender_device_config": sender_device_config, "check_userid": check_userid, "receiver_id": receiver_id, "message_text": message_text, "card_template": card_template}
                 
                 success, response_data = call_remote_proxy(payload)
@@ -268,16 +284,17 @@ if __name__ == '__main__':
                         client_main_task(claimed_user, db_collections, device_manager)
 
                     except Exception as e:
-                        logger.error(f"判定任务最终对账号{userid} 失败，{e}")
-                        consecutive_fails, crossed_day = device_manager.record_consecutive_failure(userid)
-                        if consecutive_fails == 1:
-                            logger.error(f"[{userid}] 任务首次失败，将短冷却 {config.FIRST_FAILURE_COOLDOWN_INTERVAL}s 后重试。")
+                        if "网络超时或帐号异常" not in str(e):
+                            logger.error(f"判定任务最终对账号{userid} 失败，{e}")
+                        daily_attempts, consecutive_days, crossed_day = device_manager.record_consecutive_failure(userid)
+                        if daily_attempts < MAX_PROBE_ATTEMPTS:
+                            logger.error(f"[{userid}] 当日第 {daily_attempts} 次测活失败，将冷却 {config.FIRST_FAILURE_COOLDOWN_INTERVAL}s 后再试一次。")
                             device_manager.update_next_send_time(userid, time.time() + config.FIRST_FAILURE_COOLDOWN_INTERVAL)
-                        elif crossed_day and consecutive_fails >= 2:
-                            logger.error(f"[{userid}] 已连续 {consecutive_fails} 天失败，进入长时冷却。")
+                        elif consecutive_days >= 2:
+                            logger.error(f"[{userid}] 已连续 {consecutive_days} 天测活失败，进入长时冷却（{config.FAILURE_COOLDOWN_30_DAYS}s）。")
                             device_manager.update_next_send_time(userid, time.time() + config.FAILURE_COOLDOWN_30_DAYS)
                         else:
-                            logger.error(f"[{userid}] 任务连续失败 {consecutive_fails} 次，将冷却24小时。")
+                            logger.error(f"[{userid}] 当日测活次数已用完（{daily_attempts} 次），将冷却24小时。")
                             device_manager.update_next_send_time(userid, time.time() + config.FAILURE_COOLDOWN_INTERVAL)
                     finally:
                         if mongo_client: mongo_client.close()
