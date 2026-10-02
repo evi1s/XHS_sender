@@ -6,19 +6,21 @@
 当需要修改配置时，只应修改此文件。
 """
 
-# ==============================================================================
-PROXY_SERVER_URL = "http://your-server.example.com/execute-task"
-PROXY_API_KEY = "xhs_zLri9Y4VQSbdU1hQXhCUDkXsfZKPXlCrmWhsQ9nJ"
-
-ADMIN_USERNAME = 'admin'
-ADMIN_PASSWORD = 'GysaYRLWjDBAJSkM'
+import os
 
 # ==============================================================================
-MONGO_HOST = 'mongo'
-MONGO_PORT = 27017
-MONGO_USERNAME = 'user_zBMry8vp'
-MONGO_PASSWORD = 'APj8fKmn32Vahqsx'
-MONGO_AUTH_SOURCE = 'admin'
+PROXY_SERVER_URL = os.getenv("PROXY_SERVER_URL", "http://your-server.example.com/execute-task")
+PROXY_API_KEY = os.getenv("PROXY_API_KEY", "xhs_zLri9Y4VQSbdU1hQXhCUDkXsfZKPXlCrmWhsQ9nJ")
+
+ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "GysaYRLWjDBAJSkM")
+
+# ==============================================================================
+MONGO_HOST = os.getenv("MONGO_HOST", "mongo")
+MONGO_PORT = int(os.getenv("MONGO_PORT", "27017"))
+MONGO_USERNAME = os.getenv("MONGO_USERNAME", "user_zBMry8vp")
+MONGO_PASSWORD = os.getenv("MONGO_PASSWORD", "APj8fKmn32Vahqsx")
+MONGO_AUTH_SOURCE = os.getenv("MONGO_AUTH_SOURCE", "admin")
 
 # ==============================================================================
 MONGO_DB_NAME = 'xhs_demo'
@@ -50,4 +52,4 @@ MESSAGE_SEND_MODE = 2  #<修改此处的数字来切换模式 (1=卡片1, 2=文�
 
 # ==============================================================================
 # 健康检查的云托管监测号（可选）：填写后优先生效；留空则使用服务端 sconfig.py 中配置的监测号。
-CHECK_USER_ID = ''
+CHECK_USER_ID = os.getenv('CHECK_USER_ID', '')
