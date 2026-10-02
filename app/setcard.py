@@ -8,7 +8,7 @@ JSON_FILE_PATH = 'xhs3.json'
 
 
 def _struct_signature(obj):
-    
+    """递归计算 JSON 结构签名（key 顺序 + 类型 + 嵌套结构），用于校验格式不变。"""
     if isinstance(obj, dict):
         return ('dict', [(k, _struct_signature(v)) for k, v in obj.items()])
     if isinstance(obj, list):
@@ -17,7 +17,7 @@ def _struct_signature(obj):
 
 
 def _preview_card_html(fields: dict) -> str:
-    
+    """根据字段生成卡片预览 HTML（图片→标题→价格行→底行：头像+昵称）。"""
     title = html_mod.escape(fields.get('title') or '卡片标题')
     user_name = html_mod.escape(fields.get('user_name') or '卖家昵称')
     tag_text = html_mod.escape(fields.get('tag_text') or '')
@@ -52,13 +52,11 @@ def _preview_card_html(fields: dict) -> str:
 
 
 def create_card_editor_ui(switch_view=None):
-    
+    """模块化卡片编辑器：左侧表单 + 右侧实时预览，保存时同步所有关联字段且保证 JSON 格式不变。"""
 
-    
     fields = {}
     preview_html = None
 
-    
     def load_from_disk():
         try:
             with open(JSON_FILE_PATH, 'r', encoding='utf-8') as f:
@@ -90,7 +88,6 @@ def create_card_editor_ui(switch_view=None):
         refresh_preview()
 
     def save_to_disk():
-        
         try:
             with open(JSON_FILE_PATH, 'r', encoding='utf-8') as f:
                 original_text = f.read()
@@ -105,12 +102,10 @@ def create_card_editor_ui(switch_view=None):
 
         original_sig = _struct_signature(data)
 
-        
         title = ensure_zero_width(fields['title'].value or '')
         image_url = fields['image'].value or ''
         user_name = ensure_zero_width(fields['user_name'].value or '')
         avatar = fields['avatar'].value or ''
-        
         price_raw = data.get('expectedPrice', 0)
         price_val = fields['price'].value
         if price_val is None or price_val == '':
@@ -122,7 +117,6 @@ def create_card_editor_ui(switch_view=None):
         tag_text = ensure_zero_width(fields['tag_text'].value or '')
         link = fields['link'].value or ''
 
-        
         if 'defaultTitle' in data:
             data['defaultTitle'] = title
         if 'searchContent' in data:
@@ -165,7 +159,6 @@ def create_card_editor_ui(switch_view=None):
             if isinstance(bp, dict) and 'shortLink' in bp:
                 bp['shortLink'] = link
 
-        
         new_sig = _struct_signature(data)
         if new_sig != original_sig:
             ui.notify('保存中止：字段结构发生变化（与原模板不一致），未写入文件。', color='negative')
@@ -176,7 +169,6 @@ def create_card_editor_ui(switch_view=None):
                 json.dump(data, f, ensure_ascii=False, indent=2)
             ui.notify('卡片已保存！', color='positive')
         except Exception as e:
-            
             if original_text is not None:
                 try:
                     with open(JSON_FILE_PATH, 'w', encoding='utf-8') as f:
@@ -185,7 +177,6 @@ def create_card_editor_ui(switch_view=None):
                     pass
             ui.notify(f'保存失败: {e}（已尝试恢复原文件）', color='negative')
 
-    
     def _add_field(label, key, placeholder=''):
         fields[key] = ui.input(label, placeholder=placeholder).classes('w-full')
 
@@ -199,7 +190,6 @@ def create_card_editor_ui(switch_view=None):
             ui.button('卡片消息2', icon='style', on_click=(lambda: switch_view('button10')) if switch_view else None).props('color=primary')
         with ui.column().classes('w-full gap-4 px-4 py-4'):
             with ui.row().classes('w-full items-start gap-6'):
-                
                 with ui.column().classes('w-1/2 gap-2'):
                     with ui.card().classes('w-full p-4'):
                         ui.label('➊ 标题与内容').classes('font-bold text-primary mb-2')
@@ -225,7 +215,6 @@ def create_card_editor_ui(switch_view=None):
                         ui.button('保存到文件', icon='save', on_click=save_to_disk, color='primary')
                         ui.button('重新加载', icon='refresh', on_click=load_json_content)
         
-                
                 with ui.column().classes('w-80 justify-center items-center gap-2'):
                     ui.label('👁️ 实时预览').classes('font-bold text-gray-500')
                     with ui.column().classes('relative').style('width:330px;max-width:100%;'):
@@ -236,7 +225,6 @@ def create_card_editor_ui(switch_view=None):
                             'object-fit:cover;'
                         )
         
-            
             for f in fields.values():
                 f.on_value_change(refresh_preview)
         

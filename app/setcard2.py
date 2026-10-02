@@ -8,7 +8,7 @@ JSON_FILE_PATH = 'xhs2.json'
 
 
 def _struct_signature(obj):
-    
+    """递归计算 JSON 结构签名（key 顺序 + 类型 + 嵌套结构），用于校验格式不变。"""
     if isinstance(obj, dict):
         return ('dict', [(k, _struct_signature(v)) for k, v in obj.items()])
     if isinstance(obj, list):
@@ -17,7 +17,7 @@ def _struct_signature(obj):
 
 
 def _preview_card_html(fields: dict) -> str:
-    
+    """根据字段生成卡片预览 HTML（图片→标题→副标题→标签）。"""
     title = html_mod.escape(fields.get('title') or '卡片标题')
     time_text = html_mod.escape(fields.get('time') or '')
     location = html_mod.escape(fields.get('location') or '')
@@ -27,12 +27,10 @@ def _preview_card_html(fields: dict) -> str:
                 f'onerror="this.style.display=\'none\'">'
                 if image_url else '')
 
-    
     location_pin = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#6b7280" '
                     'style="width:12px;height:12px;flex-shrink:0;"><path d="M12 2C8.13 2 5 5.13 5 9c0 '
                     '5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 '
                     '0 5.5z"/></svg>')
-    
     calendar_icon = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" '
                      'stroke="#6b7280" stroke-width="2" style="width:12px;height:12px;flex-shrink:0;">'
                      '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>'
@@ -58,7 +56,7 @@ def _preview_card_html(fields: dict) -> str:
 
 
 def create_card_editor_ui2(switch_view=None):
-    
+    """模块化卡片编辑器（xhs2 博主/活动卡片）：左侧表单 + 右侧实时预览，保存时保持 JSON 结构不变。"""
 
     fields = {}
     preview_html = None
@@ -102,14 +100,12 @@ def create_card_editor_ui2(switch_view=None):
 
         original_sig = _struct_signature(data)
 
-        
         title = ensure_zero_width(fields['title'].value or '')
         time_text = ensure_zero_width(fields['time'].value or '')
         location = ensure_zero_width(fields['location'].value or '')
         image_url = fields['image'].value or ''
         link = fields['link'].value or ''
 
-        
         for k in ('title', 'defaultTitle', 'defaultSubTitle'):
             if k in data:
                 data[k] = title
@@ -124,7 +120,6 @@ def create_card_editor_ui2(switch_view=None):
             if k in data:
                 data[k] = link
 
-        
         new_sig = _struct_signature(data)
         if new_sig != original_sig:
             ui.notify('保存中止：字段结构发生变化（与原模板不一致），未写入文件。', color='negative')
