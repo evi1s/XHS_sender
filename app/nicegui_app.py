@@ -17,6 +17,7 @@ from devices.list_ui import create_device_list_ui
 from devices.data import get_devices_collection, get_collection
 from adduserid import create_ui as create_userid_ui
 from addtext import create_ui as create_text_ui
+from sendlog import create_send_log_ui
 from xhs_shorturl import create_ui as create_shorturl_ui
 from authorize import create_ui as create_authorize_ui
 import runapp
@@ -84,6 +85,7 @@ MENU_ITEMS = {
     'button6': {'name': '客户管理', 'icon': 'group_add'},
     'button7': {'name': '文字消息', 'icon': 'rate_review'},
     'button4': {'name': '卡片消息', 'icon': 'style'},
+    'button12': {'name': '发送日志', 'icon': 'receipt_long'},
     'button10': {'name': '卡片消息2', 'icon': 'style'},
     'button8': {'name': '短链生成', 'icon': 'link'},
     'authorize': {'name': '授权设置', 'icon': 'vpn_key'},
@@ -392,7 +394,7 @@ async def main_page():
             else:
                 item.classes(remove=active_class)
 
-        centered_views = ['home', 'button1', 'button2', 'button3', 'button4', 'button5', 'button6', 'button7', 'button8', 'button9', 'button10', 'authorize', 'button11']
+        centered_views = ['home', 'button1', 'button2', 'button3', 'button4', 'button5', 'button6', 'button7', 'button8', 'button9', 'button10', 'button12', 'authorize', 'button11']
 
         if view_name in centered_views:
             content_container.classes(add='items-center')
@@ -411,6 +413,8 @@ async def main_page():
                 create_settings_ui()
             elif view_name == 'button4':
                 create_card_editor_ui(switch_view=change_view)
+            elif view_name == 'button12':
+                create_send_log_ui()
             elif view_name == 'button10':
                 create_card_editor_ui2(switch_view=change_view)
             elif view_name == 'button5':
