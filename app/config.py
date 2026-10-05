@@ -30,6 +30,7 @@ MONGO_DEVICE_COLLECTION = os.getenv("MONGO_DEVICE_COLLECTION", "devices_4hbf31")
 MONGO_USER_ID_COLLECTION = 'userid'
 MONGO_SEND_TEXT_COLLECTION = 'sendtext'
 MONGO_COMMENT_COLLECTION = 'sendtext'
+MONGO_SEND_LOG_COLLECTION = 'sendlog'
 
 # ==============================================================================
 SUCCESS_SEND_INTERVAL = 10800  #(秒) 任务成功执行后，该用户的常规冷却时间（2小时），之后才能被再次调度。
