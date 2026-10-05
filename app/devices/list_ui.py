@@ -70,21 +70,9 @@ def create_device_list_ui():
     def cooldown_ready(minutes):
         return minutes is not None and minutes <= 0
 
-    def mask_userid(uid):
-        """后8位脱敏，保留前部；短于等于8位则全部打星"""
-        uid = format_value(uid)
-        if not uid or uid == '-':
-            return uid
-        if len(uid) <= 8:
-            return '*' * len(uid)
-        return uid[:-8] + '*' * 8
-
-    def _toggle_uid(lbl, raw):
-        """点击切换：脱敏 <-> 完整"""
-        if '*' in lbl.text:
-            lbl.set_text(raw)
-        else:
-            lbl.set_text(mask_userid(raw))
+    def _toggle_nick_uid(lbl, nick_text, uid_text):
+        """点击切换：昵称 <-> 账号ID"""
+        lbl.set_text(uid_text if lbl.text == nick_text else nick_text)
 
     def _edit_next_time(item):
         dialog = ui.dialog()
@@ -130,16 +118,16 @@ def create_device_list_ui():
                 with ui.row().classes('w-full items-center no-wrap gap-2 px-2 py-2 border-b border-gray-200 dark:border-gray-700 text-sm hover:bg-gray-50 dark:hover:bg-gray-800'):
                     fail_days = item.get('consecutive_fail_days')
                     icon = '🟢' if fail_days in (None, '', 0) else ('🟡' if fail_days == 1 else '🔴')
-                    ui.label(f'{icon} {format_value(item.get("nickname"))}').classes('w-[13%] truncate text-blue-600 dark:text-blue-300')
-                    _uid_raw = format_value(item.get('userid'))
-                    _uid_lbl = ui.label(mask_userid(_uid_raw)).classes('w-[19%] break-all cursor-pointer text-blue-600 dark:text-blue-300 hover:underline')
-                    _uid_lbl.on('click', lambda e, lbl=_uid_lbl, raw=_uid_raw: _toggle_uid(lbl, raw))
-                    ui.label(format_time(item.get('register_time'))).classes('w-[10%] truncate')
-                    _nst_lbl = ui.label(format_time(item.get('next_send_time'))).classes('w-[10%] truncate cursor-pointer hover:underline')
+                    _nick_txt = f'{icon} {format_value(item.get("nickname"))}'
+                    _uid_txt = f'{icon} {format_value(item.get("userid"))}'
+                    _nick_lbl = ui.label(_nick_txt).classes('w-[22%] truncate cursor-pointer text-blue-600 dark:text-blue-300 hover:underline')
+                    _nick_lbl.on('click', lambda e, lbl=_nick_lbl, nt=_nick_txt, ut=_uid_txt: _toggle_nick_uid(lbl, nt, ut))
+                    ui.label(format_time(item.get('register_time'))).classes('w-[12%] truncate')
+                    _nst_lbl = ui.label(format_time(item.get('next_send_time'))).classes('w-[12%] truncate cursor-pointer hover:underline')
                     _nst_lbl.on('click', lambda e, it=item: _edit_next_time(it))
                     target = parse_next_time(item.get('next_send_time'))
                     minutes = cooldown_minutes(target)
-                    lbl = ui.label(format_cooldown(minutes)).classes('w-[11%] font-medium')
+                    lbl = ui.label(format_cooldown(minutes)).classes('w-[12%] font-medium')
                     if cooldown_ready(minutes):
                         lbl.classes('text-green-600')
                     else:
@@ -147,12 +135,12 @@ def create_device_list_ui():
                     if minutes is not None:
                         cooldown_refs.append((lbl, target))
                     _used = item.get('daily_used', 0); _dmax = item.get('daily_max', 0)
-                    used_lbl = ui.label(f'{_used}/{_dmax}' if _dmax else str(_used)).classes('w-[8%] font-medium')
+                    used_lbl = ui.label(f'{_used}/{_dmax}' if _dmax else str(_used)).classes('w-[9%] font-medium')
                     if item.get('daily_exhausted'):
                         used_lbl.classes('text-red-600')
-                    ui.label(format_value(item.get('consecutive_fail_days'))).classes('w-[6%]')
-                    ui.label(format_value(item.get('remarks'))).classes('w-[7%] truncate')
-                    ui.label(format_time(item.get('added_time'))).classes('w-[16%] truncate')
+                    ui.label(format_value(item.get('consecutive_fail_days'))).classes('w-[7%]')
+                    ui.label(format_value(item.get('remarks'))).classes('w-[8%] truncate')
+                    ui.label(format_time(item.get('added_time'))).classes('w-[18%] truncate')
 
         page_info.text = f'第 {state["page"]} / {total_pages} 页，共 {total} 条'
         paginator.max = total_pages
@@ -182,15 +170,14 @@ def create_device_list_ui():
 
         with ui.column().classes('w-full gap-4 px-4 py-4'):
             with ui.row().classes('w-full items-center no-wrap gap-2 px-2 py-2 font-semibold bg-gradient-to-r from-gray-100 to-gray-50 dark:from-gray-800 dark:to-gray-700 rounded-lg text-sm'):
-                ui.label('Nickname').classes('w-[13%]')
-                ui.label('UserID').classes('w-[19%]')
-                ui.label('注册时间').classes('w-[10%]')
-                ui.label('下次发送时间').classes('w-[10%]')
-                ui.label('冷却时间').classes('w-[11%]')
-                ui.label('今日已用').classes('w-[8%]')
-                ui.label('连续失败天数').classes('w-[6%]')
-                ui.label('备注').classes('w-[7%]')
-                ui.label('添加时间').classes('w-[16%]')
+                ui.label('Nickname').classes('w-[22%]')
+                ui.label('注册时间').classes('w-[12%]')
+                ui.label('下次发送时间').classes('w-[12%]')
+                ui.label('冷却时间').classes('w-[12%]')
+                ui.label('今日已用').classes('w-[9%]')
+                ui.label('连续失败天数').classes('w-[7%]')
+                ui.label('备注').classes('w-[8%]')
+                ui.label('添加时间').classes('w-[18%]')
 
             table_container = ui.column().classes('w-full gap-0')
             page_info = ui.label('').classes('text-sm text-gray-500')
