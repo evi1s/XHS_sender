@@ -20,6 +20,21 @@ logger.add(custom_stdout_sink, level="INFO", format="<green>{time:YYYY-MM-DD HH:
 MAX_PROBE_ATTEMPTS = 2
 
 
+_SEND_MODE_NAMES = {1: '卡片➊', 2: '文本', 3: '卡片+文本', 4: '卡片➋'}
+
+
+def _describe_card():
+    """根据当前配置返回 (发送模式名, 卡片样式描述)。"""
+    mode = getattr(config, 'MESSAGE_SEND_MODE', 2)
+    mode_name = _SEND_MODE_NAMES.get(mode, str(mode))
+    if mode == getattr(config, 'SEND_MODE_CARD_AND_TEXT', 3):
+        card = '卡片➊' if getattr(config, 'CARD_AND_TEXT_CARD', 1) == 1 else '卡片➋'
+        return mode_name, f'卡片+文本({card})'
+    if mode in (getattr(config, 'SEND_MODE_CARD_ONLY', 1), getattr(config, 'SEND_MODE_CARD2_ONLY', 4)):
+        return mode_name, mode_name
+    return mode_name, '无'
+
+
 class DeviceManager:
     def __init__(self):
         try:
@@ -169,6 +184,46 @@ def _is_auth_error(reason) -> bool:
     return any(k in r for k in AUTH_ERROR_KEYWORDS)
 
 
+def _classify_failure(reason) -> str:
+    """把失败原因归类为简短标签，便于在日志里一眼看出问题（如"测活失败"）。"""
+    m = str(reason or '')
+    if not m:
+        return '未知错误'
+    if any(k in m for k in ('健康监测子进程', '云托管监测号', '测活', '健康检查')):
+        return '测活失败'
+    if '未能获取到客户UID' in m or '客户UID' in m:
+        return '无可用接收方'
+    if _is_auth_error(m):
+        return '鉴权/套餐异常'
+    if _is_network_error(m):
+        return '网络异常'
+    return m[:100]
+
+
+def _write_send_log(collection, userid, receiver_id, text, send_mode, card_style, success, reason='', detail='', text_sent=None, nickname=None):
+    """写入一条发送日志（不抛异常，写日志失败不影响主流程）。
+
+    记录的是实际发出的文本内容（含加噪字符）。
+    """
+    if collection is None:
+        return
+    try:
+        collection.insert_one({
+            'time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'userid': userid,
+            'nickname': nickname or '',
+            'receiver_id': receiver_id,
+            'text': text_sent or text or '',
+            'send_mode': send_mode or '',
+            'card_style': card_style or '无',
+            'status': '成功' if success else '失败',
+            'reason': '' if success else (reason or '未知错误'),
+            'detail': '' if success else (detail or ''),
+        })
+    except Exception as e:
+        logger.warning(f"写入发送日志失败: {e}")
+
+
 def _claim_receiver(user_id_collection):
     """标记式领取一个接收方：文档保留在集合中，仅打上 claimed 标记。
 
@@ -199,19 +254,21 @@ def _release_receiver(user_id_collection, receiver_doc):
 
 
 def client_main_task(sender_device_config, db_collections, device_manager_instance):
-    userid = sender_device_config['userid']; user_id_collection = db_collections['user_id']; receiver_doc = None; task_completed = False
+    userid = sender_device_config['userid']; user_id_collection = db_collections['user_id']; send_log_collection = db_collections.get('send_log'); receiver_doc = None; task_completed = False
+    send_mode, card_style = _describe_card()
+    log_ctx = {'receiver_id': None, 'text': None, 'text_sent': None, 'send_mode': send_mode, 'card_style': card_style}
     try:
         for _ in range(config.MAX_RETRY_ATTEMPTS):
             receiver_doc = _claim_receiver(user_id_collection)
             if receiver_doc: break
             logger.warning(f"未能从集合'{config.MONGO_USER_ID_COLLECTION}'获取客户UID，等待 {config.USER_ID_POLLING_INTERVAL}秒后重试..."); time.sleep(config.USER_ID_POLLING_INTERVAL)
         if not receiver_doc: raise ValueError(f"在尝试 {config.MAX_RETRY_ATTEMPTS} 次后仍未能获取到客户UID。")
-        receiver_id = receiver_doc['user_id']; logger.success(f"[{userid}] 读取客户UID: {receiver_id}")
+        receiver_id = receiver_doc['user_id']; log_ctx['receiver_id'] = receiver_id; logger.success(f"[{userid}] 读取客户UID: {receiver_id}")
         last_exception = None
         for attempt in range(config.MAX_RETRY_ATTEMPTS):
             try:
-                message_text = None; card_template = None;
-                if config.MESSAGE_SEND_MODE in [config.SEND_MODE_TEXT_ONLY, config.SEND_MODE_CARD_AND_TEXT]: message_text = db_collections['send_text'].aggregate([{'$sample': {'size': 1}}]).next()['text']; message_text = message_text + ''.join(random.choice('!@#$%^&*()') for _ in range(random.randint(1, 2))); logger.info(f"[{userid}] 文本消息已加噪，准备发送。")
+                message_text = None; card_template = None; clean_text = None;
+                if config.MESSAGE_SEND_MODE in [config.SEND_MODE_TEXT_ONLY, config.SEND_MODE_CARD_AND_TEXT]: clean_text = db_collections['send_text'].aggregate([{'$sample': {'size': 1}}]).next()['text']; message_text = clean_text + ''.join(random.choice('!@#$%^&*()') for _ in range(random.randint(1, 2))); logger.info(f"[{userid}] 文本消息已加噪，准备发送。")
                 if config.MESSAGE_SEND_MODE in [config.SEND_MODE_CARD_ONLY, config.SEND_MODE_CARD2_ONLY, config.SEND_MODE_CARD_AND_TEXT]:
                     card_json_path = 'xhs3.json'
                     if config.MESSAGE_SEND_MODE == config.SEND_MODE_CARD2_ONLY or (config.MESSAGE_SEND_MODE == config.SEND_MODE_CARD_AND_TEXT and getattr(config, 'CARD_AND_TEXT_CARD', 1) == 2):
@@ -223,6 +280,8 @@ def client_main_task(sender_device_config, db_collections, device_manager_instan
                         except Exception as e: logger.error(f"加载卡片模板文件 '{card_json_path}' 失败: {e}，本次私信不发送卡片。")
                     else: logger.warning(f"卡片模板文件 '{card_json_path}' 不存在，本次私信将不发送卡片。")
                 if not message_text and not card_template: raise ValueError("消息内容和卡片模板均为空，请检查配置或文件。")
+                log_ctx['text'] = clean_text
+                log_ctx['text_sent'] = message_text
                 check_userid = (getattr(config, 'CHECK_USER_ID', '') or '').strip()
                 if check_userid:
                     logger.info(f"云托管测活号: {check_userid}")
@@ -236,6 +295,7 @@ def client_main_task(sender_device_config, db_collections, device_manager_instan
                     user_id_collection.delete_one({'_id': receiver_doc['_id']})
                     task_completed = True
                     device_manager_instance.increment_daily_usage(userid); device_manager_instance.update_next_send_time(userid, time.time() + config.SUCCESS_SEND_INTERVAL); device_manager_instance.clear_consecutive_failure(userid)
+                    _write_send_log(send_log_collection, userid, receiver_id, clean_text, send_mode, card_style, True, text_sent=message_text, nickname=sender_device_config.get('nickname'))
                     logger.success(f"[{userid}] 本次任务完成，该账号状态已更新。"); return
                 else:
                     reason = response_data.get('reason') if response_data else "未知远程错误"
@@ -257,6 +317,11 @@ def client_main_task(sender_device_config, db_collections, device_manager_instan
         if receiver_doc and not task_completed:
             _release_receiver(user_id_collection, receiver_doc)
             logger.warning(f"[{userid}] 已将客户UID {receiver_doc.get('user_id')} 回滚入库。")
+        if not task_completed:
+            _write_send_log(send_log_collection, userid, log_ctx['receiver_id'], log_ctx['text'],
+                            log_ctx['send_mode'], log_ctx['card_style'], False,
+                            _classify_failure(str(final_exception)), str(final_exception)[:500],
+                            text_sent=log_ctx.get('text_sent'), nickname=sender_device_config.get('nickname'))
         raise final_exception
 
 
@@ -279,7 +344,7 @@ if __name__ == '__main__':
                     try:
                         mongo_client = MongoClient(f'mongodb://{config.MONGO_HOST}:{config.MONGO_PORT}/', username=config.MONGO_USERNAME, password=config.MONGO_PASSWORD, authSource=config.MONGO_AUTH_SOURCE)
                         db = mongo_client[config.MONGO_DB_NAME]
-                        db_collections = {"user_id": db[config.MONGO_USER_ID_COLLECTION], "send_text": db[config.MONGO_SEND_TEXT_COLLECTION], "comment": db[config.MONGO_COMMENT_COLLECTION]}
+                        db_collections = {"user_id": db[config.MONGO_USER_ID_COLLECTION], "send_text": db[config.MONGO_SEND_TEXT_COLLECTION], "comment": db[config.MONGO_COMMENT_COLLECTION], "send_log": db[getattr(config, 'MONGO_SEND_LOG_COLLECTION', 'sendlog')]}
                         
                         client_main_task(claimed_user, db_collections, device_manager)
 
